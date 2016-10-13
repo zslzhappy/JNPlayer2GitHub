@@ -21,9 +21,9 @@ class ViewController: UIViewController {
         self.setUpTopPlayer()
         
         
-        self.topPlayerView.play(NSURL(string: "")!, title: "TopPlayerView")
+        self.topPlayerView.play(NSURL(string: "http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4")!, title: "TopPlayerView")
         
-        self.bottomPlayerView.play(NSURL(string: "")!, title: "BottomPlayerView")
+        self.bottomPlayerView.play(NSURL(string: "http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4")!, title: "BottomPlayerView")
         
     }
     
@@ -42,6 +42,11 @@ class ViewController: UIViewController {
         self.topPlayerView.addConstraint({
             return NSLayoutConstraint(item: self.topPlayerView, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 200)
             }())
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        //self.topPlayerView.play()
     }
 
     override func didReceiveMemoryWarning() {
