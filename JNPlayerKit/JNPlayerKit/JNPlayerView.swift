@@ -11,6 +11,9 @@ import AVFoundation
 
 private protocol JNPlayerDelegate: class {
     func jnPlayerStatusChanged(status:AVPlayerItemStatus)
+    
+    func jnPlayerTimeChanged(currentTime: NSTimeInterval, totalTime:NSTimeInterval)
+
 }
 
 
@@ -19,7 +22,7 @@ private protocol JNPlayerDelegate: class {
     func pause()
 }
 
-enum JNPlayerStatus {
+public enum JNPlayerStatus {
     case Play
     case Pause
 }
@@ -27,6 +30,14 @@ enum JNPlayerStatus {
 public class JNPlayerView: UIView {
     
     private var player:JNPlayer = JNPlayer()
+    
+    public var status:JNPlayerStatus = .Pause{
+        didSet{
+            self.playerControl.playerStatus = status
+        }
+    }
+    
+    public var autoPlay:Bool = true
     
     private var playerControl:JNPlayerControlView = JNPlayerControlView()
     
@@ -74,12 +85,12 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     
     public func play(){
         self.player.play()
-        self.playerControl.playerStatus = .Play
+        self.status = .Play
     }
     
     public func pause() {
         self.player.pause()
-        self.playerControl.playerStatus = .Pause
+        self.status = .Pause
     }
 }
 
@@ -93,7 +104,19 @@ extension JNPlayerView: JNPlayerDelegate{
         case .ReadyToPlay:
             print("ReadyToPlay")
             self.playerControl.closeLoading()
+            if self.autoPlay{
+                self.play()
+            }
         }
+    }
+    
+    private func jnPlayerTimeChanged(currentTime: NSTimeInterval, totalTime: NSTimeInterval) {
+        print("current:\(currentTime)")
+        print("total:\(totalTime)")
+        
+        self.playerControl.playProgress = Float(currentTime / totalTime)
+        self.playerControl.currentTime = currentTime
+        self.playerControl.totalTime = totalTime
     }
 }
 
@@ -101,23 +124,53 @@ private class JNPlayer: UIView{
 
     let playerLayer = AVPlayerLayer()
     
+    var playerTimeObserverToken:AnyObject?
+    
     var player:AVPlayer? = nil{
         didSet{
             self.playerLayer.player = player
+            let timeScale = CMTimeScale(NSEC_PER_SEC)
+            let time = CMTime(seconds: 0.5, preferredTimescale: timeScale)
+            
+            self.playerTimeObserverToken = self.player?.addPeriodicTimeObserverForInterval(time, queue: dispatch_get_main_queue(), usingBlock: {[unowned self] time in
+                
+                // update Slider and Progress
+                let current = CMTimeGetSeconds(self.player!.currentItem!.currentTime())
+                
+                let total = CMTimeGetSeconds(self.player!.currentItem!.duration)
+                
+                self.delegate?.jnPlayerTimeChanged(current, totalTime: total)
+                
+            })
+        }
+        willSet{
+            if let _ = self.playerTimeObserverToken{
+                self.player?.removeTimeObserver(self.playerTimeObserverToken!)
+            }
         }
     }
     
     let PlayerItemStatusContext = UnsafeMutablePointer<()>()
+    let PlayerLoadTimeRangeContext = UnsafeMutablePointer<()>()
+    let PlaybackBufferEmptyContext = UnsafeMutablePointer<()>()
+    let PlaybackBufferLikelyToKeepUpContext = UnsafeMutablePointer<()>()
     
     private var playerItem:AVPlayerItem? = nil{
         didSet{
             if let _ = playerItem{
                 playerItem?.addObserver(self, forKeyPath: "status", options: NSKeyValueObservingOptions.New, context: PlayerItemStatusContext)
+                playerItem?.addObserver(self, forKeyPath: "loadedTimeRanges", options: NSKeyValueObservingOptions.New, context: PlayerLoadTimeRangeContext)
+                playerItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: NSKeyValueObservingOptions.New, context: PlaybackBufferEmptyContext)
+                playerItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: NSKeyValueObservingOptions.New, context: PlaybackBufferLikelyToKeepUpContext)
+                
                 self.player = AVPlayer(playerItem: self.playerItem)
             }
         }
         willSet{
             playerItem?.removeObserver(self, forKeyPath: "status", context: PlayerItemStatusContext)
+            playerItem?.removeObserver(self, forKeyPath: "loadedTimeRanges", context: PlayerLoadTimeRangeContext)
+            playerItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty", context: PlaybackBufferEmptyContext)
+            playerItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp", context: PlaybackBufferLikelyToKeepUpContext)
         }
     }
     
@@ -155,6 +208,7 @@ private class JNPlayer: UIView{
     }
     
     private override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+        
         if context == PlayerItemStatusContext{
             if let item = object as? AVPlayerItem{
                 self.delegate?.jnPlayerStatusChanged(item.status)
@@ -167,7 +221,24 @@ private class JNPlayer: UIView{
                     print("ReadToPlay")
                 }
             }
+            return
         }
+        
+        if context == PlayerLoadTimeRangeContext{
+        
+            return
+        }
+        
+        if context == PlaybackBufferEmptyContext{
+            
+            return
+        }
+        
+        if context == PlaybackBufferLikelyToKeepUpContext{
+        
+            return
+        }
+        
     }
     
     
