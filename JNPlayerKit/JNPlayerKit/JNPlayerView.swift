@@ -9,11 +9,13 @@
 import UIKit
 import AVFoundation
 
+
 private protocol JNPlayerDelegate: class {
-    func jnPlayerStatusChanged(status:AVPlayerItemStatus)
+    func jnPlayerStatusChanged(status:JNPlayerStatus)
     
     func jnPlayerTimeChanged(currentTime: NSTimeInterval, totalTime:NSTimeInterval)
 
+    func jnPlayerLoadedChanged(loadedTime: NSTimeInterval, totalTime: NSTimeInterval)
 }
 
 
@@ -25,9 +27,15 @@ private protocol JNPlayerDelegate: class {
 public enum JNPlayerStatus {
     case Play
     case Pause
+    case PlayEnd
+    case Failed
+    case Unknown
+    case ReadyToPlay
 }
 
 public class JNPlayerView: UIView {
+    
+    public var backAction:(() -> Void)?
     
     private var player:JNPlayer = JNPlayer()
     
@@ -81,6 +89,7 @@ public class JNPlayerView: UIView {
 extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     public func play(URL:NSURL, title:String? = nil){
         self.player.URL = URL
+        self.playerControl.title = title
     }
     
     public func play(){
@@ -92,31 +101,97 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         self.player.pause()
         self.status = .Pause
     }
+    
+    public func back() {
+        self.backAction?()
+    }
+    
+    func jnPlayerTimes() -> (total: NSTimeInterval, current: NSTimeInterval) {
+        if let totalTime = self.player.player?.currentItem?.duration, let currentTime = self.player.player?.currentItem?.currentTime(){
+            
+            if totalTime == currentTime{
+                self.status = .PlayEnd
+            }
+            
+            return (CMTimeGetSeconds(totalTime), CMTimeGetSeconds(currentTime))
+        }else{
+            return (0, 0)
+        }
+    }
+    
+    func jnPlayerSeekTime(time: NSTimeInterval) {
+        
+        if time.isNaN {
+            return
+        }
+        if self.player.player?.currentItem?.status == AVPlayerItemStatus.ReadyToPlay {
+            let draggedTime = CMTimeMake(Int64(time), 1)
+            self.player.player?.seekToTime(draggedTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero, completionHandler: { (success) in
+                
+            })
+        }
+    }
+    
+    func jnPlayerFullScreen(full: Bool) {
+        if full{
+            
+            var supportFullScreen:Bool = false
+            
+            if let support = UIApplication.sharedApplication().delegate?.application?(UIApplication.sharedApplication(), supportedInterfaceOrientationsForWindow: UIApplication.sharedApplication().keyWindow){
+            
+                supportFullScreen = support.contains([.LandscapeLeft, .LandscapeRight])
+            }else{
+                let support = UIApplication.sharedApplication().supportedInterfaceOrientationsForWindow(UIApplication.sharedApplication().keyWindow)
+                
+                supportFullScreen = support.contains([.LandscapeLeft, .LandscapeRight])
+            }
+            
+            guard supportFullScreen else {
+                return
+            }
+            
+            UIDevice.currentDevice().setValue(UIInterfaceOrientation.LandscapeRight.rawValue, forKey: "orientation")
+            UIApplication.sharedApplication().setStatusBarHidden(false, withAnimation: UIStatusBarAnimation.Fade)
+            UIApplication.sharedApplication().setStatusBarOrientation(UIInterfaceOrientation.LandscapeRight, animated: false)
+        }else{
+            UIDevice.currentDevice().setValue(UIInterfaceOrientation.Portrait.rawValue, forKey: "orientation")
+            UIApplication.sharedApplication().setStatusBarHidden(false, withAnimation: UIStatusBarAnimation.Fade)
+            UIApplication.sharedApplication().setStatusBarOrientation(UIInterfaceOrientation.Portrait, animated: false)
+        }
+    }
 }
 
 extension JNPlayerView: JNPlayerDelegate{
-    func jnPlayerStatusChanged(status: AVPlayerItemStatus) {
+    func jnPlayerStatusChanged(status: JNPlayerStatus) {
         switch status {
         case .Failed:
             print("Fail")
         case .Unknown:
             print("Unknown")
+        case .Pause, .Play:
+            print("")
         case .ReadyToPlay:
-            print("ReadyToPlay")
-            self.playerControl.closeLoading()
-            if self.autoPlay{
-                self.play()
+            if let second = self.player.player?.currentTime().seconds where second <= 0{
+                self.playerControl.closeLoading()
+                
+                if self.autoPlay{
+                    self.play()
+                    self.playerControl.isShow = true
+                }
             }
+        case .PlayEnd:
+            self.status = .PlayEnd
         }
     }
     
     private func jnPlayerTimeChanged(currentTime: NSTimeInterval, totalTime: NSTimeInterval) {
-        print("current:\(currentTime)")
-        print("total:\(totalTime)")
-        
         self.playerControl.playProgress = Float(currentTime / totalTime)
         self.playerControl.currentTime = currentTime
         self.playerControl.totalTime = totalTime
+    }
+    
+    private func jnPlayerLoadedChanged(loadedTime: NSTimeInterval, totalTime: NSTimeInterval) {
+        self.playerControl.bufferProgress = Float(loadedTime / totalTime)
     }
 }
 
@@ -125,6 +200,18 @@ private class JNPlayer: UIView{
     let playerLayer = AVPlayerLayer()
     
     var playerTimeObserverToken:AnyObject?
+    
+    weak var delegate:JNPlayerDelegate? = nil
+    
+    var URL:NSURL? = nil{
+        didSet{
+            if let _ = URL{
+                self.playerItem = AVPlayerItem(URL: URL!)
+            }else{
+                self.playerItem = nil
+            }
+        }
+    }
     
     var player:AVPlayer? = nil{
         didSet{
@@ -150,41 +237,33 @@ private class JNPlayer: UIView{
         }
     }
     
-    let PlayerItemStatusContext = UnsafeMutablePointer<()>()
-    let PlayerLoadTimeRangeContext = UnsafeMutablePointer<()>()
-    let PlaybackBufferEmptyContext = UnsafeMutablePointer<()>()
-    let PlaybackBufferLikelyToKeepUpContext = UnsafeMutablePointer<()>()
+    let PlayerItemStatusKey = "status"
+    let PlayerLoadTimeRangeKey = "loadedTimeRanges"
+    let PlaybackBufferEmptyKey = "playbackBufferEmpty"
+    let PlaybackBufferLikelyToKeepUpKey = "playbackLikelyToKeepUp"
     
     private var playerItem:AVPlayerItem? = nil{
         didSet{
+            
             if let _ = playerItem{
-                playerItem?.addObserver(self, forKeyPath: "status", options: NSKeyValueObservingOptions.New, context: PlayerItemStatusContext)
-                playerItem?.addObserver(self, forKeyPath: "loadedTimeRanges", options: NSKeyValueObservingOptions.New, context: PlayerLoadTimeRangeContext)
-                playerItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: NSKeyValueObservingOptions.New, context: PlaybackBufferEmptyContext)
-                playerItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: NSKeyValueObservingOptions.New, context: PlaybackBufferLikelyToKeepUpContext)
+                playerItem?.addObserver(self, forKeyPath: PlayerItemStatusKey, options: NSKeyValueObservingOptions.New, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlayerLoadTimeRangeKey, options: NSKeyValueObservingOptions.New, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlaybackBufferEmptyKey, options: NSKeyValueObservingOptions.New, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlaybackBufferLikelyToKeepUpKey, options: NSKeyValueObservingOptions.New, context: nil)
+                
+                NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.playerDidPlayEnd(_:)), name: AVPlayerItemDidPlayToEndTimeNotification, object: nil)
                 
                 self.player = AVPlayer(playerItem: self.playerItem)
             }
         }
         willSet{
-            playerItem?.removeObserver(self, forKeyPath: "status", context: PlayerItemStatusContext)
-            playerItem?.removeObserver(self, forKeyPath: "loadedTimeRanges", context: PlayerLoadTimeRangeContext)
-            playerItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty", context: PlaybackBufferEmptyContext)
-            playerItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp", context: PlaybackBufferLikelyToKeepUpContext)
+            playerItem?.removeObserver(self, forKeyPath: PlayerItemStatusKey, context: nil)
+            playerItem?.removeObserver(self, forKeyPath: PlayerLoadTimeRangeKey, context: nil)
+            playerItem?.removeObserver(self, forKeyPath: PlaybackBufferEmptyKey, context: nil)
+            playerItem?.removeObserver(self, forKeyPath: PlaybackBufferLikelyToKeepUpKey, context: nil)
         }
     }
     
-    var URL:NSURL? = nil{
-        didSet{
-            if let _ = URL{
-                self.playerItem = AVPlayerItem(URL: URL!)
-            }else{
-                self.playerItem = nil
-            }
-        }
-    }
-    
-    weak var delegate:JNPlayerDelegate? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -209,36 +288,58 @@ private class JNPlayer: UIView{
     
     private override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         
-        if context == PlayerItemStatusContext{
-            if let item = object as? AVPlayerItem{
-                self.delegate?.jnPlayerStatusChanged(item.status)
+        if let item = object as? AVPlayerItem where item == self.player?.currentItem{
+            if keyPath == PlayerItemStatusKey{
                 switch item.status {
                 case .Failed:
-                    print("加载失败")
+                    self.delegate?.jnPlayerStatusChanged(.Failed)
                 case .Unknown:
-                    print("未知状态")
+                    self.delegate?.jnPlayerStatusChanged(.Unknown)
                 case .ReadyToPlay:
-                    print("ReadToPlay")
+                    self.delegate?.jnPlayerStatusChanged(.ReadyToPlay)
                 }
+                return
             }
-            return
-        }
-        
-        if context == PlayerLoadTimeRangeContext{
-        
-            return
-        }
-        
-        if context == PlaybackBufferEmptyContext{
             
-            return
+            if keyPath == PlayerLoadTimeRangeKey{
+                
+                let loadTimeRange = item.loadedTimeRanges
+                
+                if let timeRangeValue = loadTimeRange.first{
+                    
+                    let timeRange = timeRangeValue.CMTimeRangeValue
+                    
+                    let start = CMTimeGetSeconds(timeRange.start)
+                    let duration = CMTimeGetSeconds(timeRange.duration)
+                    
+                    let loaded = start + duration
+                    let total = CMTimeGetSeconds(item.duration)
+                    
+                    self.delegate?.jnPlayerLoadedChanged(loaded, totalTime: total)
+                }
+                
+                
+                
+                return
+            }
+            
+            if keyPath == PlaybackBufferEmptyKey{
+                
+                return
+            }
+            
+            if keyPath == PlaybackBufferLikelyToKeepUpKey{
+                
+                return
+            }
+
         }
-        
-        if context == PlaybackBufferLikelyToKeepUpContext{
-        
-            return
+    }
+    
+    @objc func playerDidPlayEnd(notification:NSNotification){
+        if let item = notification.object as? AVPlayerItem where item == self.player?.currentItem{
+            self.delegate?.jnPlayerStatusChanged(.PlayEnd)
         }
-        
     }
     
     
@@ -246,11 +347,15 @@ private class JNPlayer: UIView{
         self.URL = nil
         self.playerItem = nil
         self.player = nil
+        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
 }
 
 extension JNPlayer:JNPlayerControl{
     @objc private func play(){
+        if self.player?.currentItem?.duration == self.player?.currentItem?.currentTime(){
+            self.player?.seekToTime(kCMTimeZero)
+        }
         self.playerLayer.player?.play()
     }
     

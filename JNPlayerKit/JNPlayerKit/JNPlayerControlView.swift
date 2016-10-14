@@ -8,7 +8,15 @@
 
 import UIKit
 
-protocol JNPlayerControlDelegate:JNPlayerControl {}
+protocol JNPlayerControlDelegate:JNPlayerControl {
+    func jnPlayerTimes() -> (total: NSTimeInterval, current: NSTimeInterval)
+    func jnPlayerSeekTime(time:NSTimeInterval)
+    
+    func jnPlayerFullScreen(full:Bool)
+    
+    func back()
+}
+
 
 // MARK: 播放控制器
 class JNPlayerControlView: UIView {
@@ -20,10 +28,30 @@ class JNPlayerControlView: UIView {
     let bottomControl:BottomControlView = BottomControlView()
     
     weak var delegate:JNPlayerControlDelegate? = nil
+    
+    // ControlView 当前是否显示
+    var isShow:Bool = true{
+        didSet{
+            if isShow{
+                self.showControl()
+            }else{
+                self.hiddenControl()
+            }
+        }
+    }
 
     var playerStatus:JNPlayerStatus = .Pause{
         didSet{
             self.middleControl.playerStatus = playerStatus
+        }
+    }
+    
+    var title:String?{
+        get{
+            return self.topControl.titleLabel.text
+        }
+        set{
+            self.topControl.titleLabel.text = newValue
         }
     }
     
@@ -81,16 +109,23 @@ class JNPlayerControlView: UIView {
         self.setUpAction()
     }
     
+    var topControlTopConstraint:NSLayoutConstraint? = nil
+    var bottomControlBottomContraint:NSLayoutConstraint? = nil
+    
     func setUpUI(){
         self.translatesAutoresizingMaskIntoConstraints = false
         self.backgroundColor = UIColor.clearColor()
+        self.clipsToBounds = true
         
         [self.topControl, self.middleControl, self.bottomControl].forEach({self.addSubview($0)})
         
         // TopControl Layout
         self.addConstraints({[unowned self] in
             let left = NSLayoutConstraint(item: self.topControl, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
+            
             let top = NSLayoutConstraint(item: self.topControl, attribute: .Top, relatedBy: .Equal, toItem: self, attribute: .Top, multiplier: 1, constant: 0)
+            self.topControlTopConstraint = top
+            
             let right = NSLayoutConstraint(item: self.topControl, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: 0)
             return [left, top, right]
         }())
@@ -107,6 +142,7 @@ class JNPlayerControlView: UIView {
             let left = NSLayoutConstraint(item: self.bottomControl, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
             let right = NSLayoutConstraint(item: self.bottomControl, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: 0)
             let bottom = NSLayoutConstraint(item: self.bottomControl, attribute: .Bottom, relatedBy: .Equal, toItem: self, attribute: .Bottom, multiplier: 1, constant: 0)
+            self.bottomControlBottomContraint = bottom
             return [left, right, bottom]
         }())
         
@@ -115,31 +151,146 @@ class JNPlayerControlView: UIView {
     
     func setUpAction(){
         
+        self.topControl.backAction = {[unowned self] in self.delegate?.back()}
+        
         self.middleControl.playAction = {[unowned self] in self.delegate?.play()}
         
         self.middleControl.pauseAction = {[unowned self] in self.delegate?.pause()}
+        
+        self.middleControl.replayAction = {[unowned self] in self.delegate?.play()}
+        
+        self.bottomControl.sliderValueChangedAction = {[unowned self] value in
+            let totalTime = self.delegate?.jnPlayerTimes().total ?? 0
+            
+            let currentTime = totalTime * Double(value)
+            
+            self.currentTime = currentTime
+            
+            // player seek time
+            self.delegate?.jnPlayerSeekTime(currentTime)
+        }
+        
+        self.bottomControl.fullScreenAction = {[unowned self] in
+            self.delegate?.jnPlayerFullScreen(true)
+        }
+        
+        self.bottomControl.nonFullScreenAction = {[unowned self] in
+            self.delegate?.jnPlayerFullScreen(false)
+        }
+        
+        let tapGes = UITapGestureRecognizer(target: self, action: #selector(self.tapAction(_:)))
+        self.addGestureRecognizer(tapGes)
+    }
+    
+    func tapAction(tap:UITapGestureRecognizer){
+        self.isShow = !self.isShow
+    }
+    
+    func showControl(){
+        
+        UIView.animateWithDuration(0.35, delay: 0, options: .CurveEaseIn, animations: {
+            
+            // topControl
+            self.topControlTopConstraint?.constant = 0
+            self.topControl.alpha = 1
+            
+            // bottomControl
+            self.bottomControlBottomContraint?.constant = 0
+            self.bottomControl.alpha = 1
+            
+            // middleControl
+            self.middleControl.alpha = 1
+            
+            self.layoutIfNeeded()
+        }, completion: {completed in
+            
+            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 2))
+            
+            dispatch_after(delayTime, dispatch_get_main_queue(), {[unowned self] in
+                self.isShow = false
+            })
+        })
+        
+    }
+    
+    func hiddenControl(){
+        UIView.animateWithDuration(0.35, delay: 0, options: .CurveEaseIn, animations: {
+            
+            // topControl
+            self.topControlTopConstraint?.constant = -40
+            self.topControl.alpha = 0
+            
+            // bottomControl
+            self.bottomControlBottomContraint?.constant = 40
+            self.bottomControl.alpha = 0
+            
+            // middleControl
+            self.middleControl.alpha = 0
+            
+            self.layoutIfNeeded()
+            
+        }, completion: nil)
     }
     
     // MARK: 顶部控制器
     class TopControlView: UIView{
+        
+        var backAction:PlayerAction?
+        
+        let backButton:UIButton = {
+            let button = UIButton()
+            button.setTitle("返回", forState: .Normal)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            return button
+        }()
+        
+        let titleLabel:UILabel = {
+            let lable = UILabel()
+            lable.translatesAutoresizingMaskIntoConstraints = false
+            return lable
+        }()
+        
         override init(frame: CGRect) {
             super.init(frame: frame)
             self.setUpUI()
+            self.setUpAction()
         }
         
         required init?(coder aDecoder: NSCoder) {
             super.init(coder: aDecoder)
             self.setUpUI()
+            self.setUpAction()
         }
         
         func setUpUI(){
             self.translatesAutoresizingMaskIntoConstraints = false
             self.backgroundColor = UIColor.blueColor()
-            self.addConstraint({[unowned self] in
+            
+            self.addSubview(self.backButton)
+            self.addSubview(self.titleLabel)
+            
+            self.addConstraints({[unowned self] in
                 let height = NSLayoutConstraint(item: self, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 40)
-                return height
+                
+                // backButton layout
+                let backLeft = NSLayoutConstraint(item: self.backButton, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 10)
+                let backCenterY = NSLayoutConstraint(item: self.backButton, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
+                
+                // titleLabel layout
+                let titleLeft = NSLayoutConstraint(item: self.titleLabel, attribute: .Left, relatedBy: .Equal, toItem: self.backButton, attribute: .Right, multiplier: 1, constant: 0)
+                let titleCenterY = NSLayoutConstraint(item: self.titleLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
+                
+                return [height, backLeft, backCenterY, titleLeft, titleCenterY]
             }())
             self.layoutIfNeeded()
+        }
+        
+        func setUpAction(){
+            self.backButton.addTarget(self, action: #selector(self.backAction(_:)), forControlEvents: .TouchUpInside)
+        }
+        
+        func backAction(sender:UIButton){
+            self.backAction?()
         }
     }
     
@@ -155,12 +306,19 @@ class JNPlayerControlView: UIView {
                 case .Play:
                     self.pauseButton.hidden = false
                     self.playButton.hidden = true
+                case .PlayEnd:
+                    self.pauseButton.hidden = true
+                    self.playButton.hidden = true
+                    self.replayButton.hidden = false
+                default:
+                    print("other status")
                 }
             }
         }
         
         var playAction:PlayerAction?
         var pauseAction:PlayerAction?
+        var replayAction:PlayerAction?
         
         let playButton:UIButton = {
             let button = UIButton()
@@ -172,6 +330,13 @@ class JNPlayerControlView: UIView {
         let pauseButton:UIButton = {
             let button = UIButton()
             button.setTitle("暂停", forState: .Normal)
+            button.hidden = true
+            return button
+        }()
+        
+        let replayButton: UIButton = {
+            let button = UIButton()
+            button.setTitle("重播", forState: .Normal)
             button.hidden = true
             return button
         }()
@@ -199,7 +364,7 @@ class JNPlayerControlView: UIView {
             self.translatesAutoresizingMaskIntoConstraints = false
             self.backgroundColor = UIColor.clearColor()
             
-            [self.pauseButton, self.playButton, self.loadingView].forEach({[unowned self] item in
+            [self.pauseButton, self.playButton, self.replayButton,self.loadingView].forEach({[unowned self] item in
                 item.translatesAutoresizingMaskIntoConstraints = false
                 self.addSubview(item)
                 let width = NSLayoutConstraint(item: item, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 40)
@@ -213,7 +378,7 @@ class JNPlayerControlView: UIView {
                 let height = NSLayoutConstraint(item: self, attribute: .Height, relatedBy: .Equal, toItem: self, attribute: .Width, multiplier: 1, constant: 0)
                 
                 var constArr:[NSLayoutConstraint] = []
-                for item in [self.playButton, self.pauseButton, self.loadingView]{
+                for item in [self.playButton, self.pauseButton, self.loadingView, self.replayButton]{
                     let centerX = NSLayoutConstraint(item: item, attribute: .CenterX, relatedBy: .Equal, toItem: self, attribute: .CenterX, multiplier: 1, constant: 0)
                     let centerY = NSLayoutConstraint(item: item, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
                     constArr.append(centerX)
@@ -230,7 +395,7 @@ class JNPlayerControlView: UIView {
         }
         
         func setUpAction(){
-            [self.playButton, self.pauseButton].forEach({[unowned self] in $0.addTarget(self, action: #selector(self.playAction(_:)), forControlEvents: .TouchUpInside)})
+            [self.playButton, self.pauseButton, self.replayButton].forEach({[unowned self] in $0.addTarget(self, action: #selector(self.playAction(_:)), forControlEvents: .TouchUpInside)})
         }
         
         func playAction(sender:UIButton){
@@ -243,6 +408,8 @@ class JNPlayerControlView: UIView {
             case self.pauseButton:
                 self.pauseAction?()
                 self.playButton.hidden = false
+            case self.replayButton:
+                self.replayAction?()
             default:
                 print("")
             }
@@ -259,6 +426,8 @@ class JNPlayerControlView: UIView {
         
         var fullScreenAction:PlayerAction?
         var nonFullScreenAction:PlayerAction?
+        
+        var sliderValueChangedAction:((value:Float) -> Void)?
         
         var bufferProgress:Float{
             get{
@@ -288,7 +457,7 @@ class JNPlayerControlView: UIView {
         
         private let playedTimeLabel:UILabel = {
             let label = UILabel()
-            label.text = "10:00"
+            label.text = "00:00"
             return label
         }()
         
@@ -303,6 +472,7 @@ class JNPlayerControlView: UIView {
             button.setTitle("非全屏", forState: .Normal)
             return button
         }()
+        
         
         override init(frame: CGRect) {
             super.init(frame: frame)
@@ -358,7 +528,20 @@ class JNPlayerControlView: UIView {
                 return [fullRight, fullCenterY, nonFullRight, nonFullCenterY, playedLeft, playedCenterY, totalRight, totalCenterY, progressLeft, progressTop, progressRight, progressBottom]
             }())
             
-            self.nonFullScreenButton.hidden = true
+            
+            let currentOrient = UIApplication.sharedApplication().statusBarOrientation
+            
+            switch currentOrient {
+            case .LandscapeRight, .LandscapeLeft:
+                self.nonFullScreenButton.hidden = false
+                self.fullScreenButton.hidden = true
+            case .Portrait:
+                self.nonFullScreenButton.hidden = true
+                self.fullScreenButton.hidden = false
+            default:
+                self.nonFullScreenButton.hidden = true
+                self.fullScreenButton.hidden = false
+            }
             
             self.layoutIfNeeded()
         }
@@ -367,24 +550,58 @@ class JNPlayerControlView: UIView {
             [self.fullScreenButton, self.nonFullScreenButton].forEach({[unowned self] in
                 $0.addTarget(self, action: #selector(self.playActions(_:)), forControlEvents: .TouchUpInside)
             })
+            
+            // Slider Action
+            self.processView.slider.addTarget(self, action: #selector(self.sliderActionEnd(_:event:)), forControlEvents: [.TouchUpInside, .TouchCancel, .TouchUpOutside])
+            self.processView.slider.addTarget(self, action: #selector(self.sliderActionBegin(_:event:)), forControlEvents: .TouchDown)
+            self.processView.slider.addTarget(self, action: #selector(self.sliderActionValueChanged(_:event:)), forControlEvents: .ValueChanged)
+            
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.screenOrientionChanged(_:)), name: UIApplicationDidChangeStatusBarOrientationNotification, object: nil)
+        }
+        
+        func screenOrientionChanged(notification:NSNotification){
+            
+            let orient = UIApplication.sharedApplication().statusBarOrientation
+            
+            switch orient {
+            case .Portrait:
+                self.nonFullScreenButton.hidden = true
+                self.fullScreenButton.hidden = false
+            case .LandscapeRight, .LandscapeLeft:
+                self.nonFullScreenButton.hidden = false
+                self.fullScreenButton.hidden = true
+            default:
+                print("")
+            }
         }
         
         func playActions(sender:UIButton){
-            
-            sender.hidden = true
-            
             switch sender {
             case self.fullScreenButton:
                 self.fullScreenAction?()
-                self.nonFullScreenButton.hidden = false
                 
             case self.nonFullScreenButton:
                 self.nonFullScreenAction?()
-                self.fullScreenButton.hidden = false
                 
             default:
                 print("")
             }
+        }
+        
+        func sliderActionEnd(sender:UISlider, event:UIControlEvents){
+            print(#function)
+        }
+        
+        func sliderActionBegin(sender:UISlider, event:UIControlEvents){
+            print(#function)
+        }
+        
+        func sliderActionValueChanged(sender:UISlider, event:UIControlEvents){
+            self.sliderValueChangedAction?(value:sender.value)
+        }
+        
+        deinit{
+            NSNotificationCenter.defaultCenter().removeObserver(self)
         }
         
         class ProgressView:UIView{
@@ -411,7 +628,6 @@ class JNPlayerControlView: UIView {
                 let pro = UIProgressView()
                 pro.tintColor = UIColor.greenColor()
                 pro.trackTintColor = UIColor.yellowColor()
-                pro.progress = 0.5
                 return pro
             }()
             
@@ -459,9 +675,10 @@ class JNPlayerControlView: UIView {
             func setUpAction(){
                 
             }
+            
+            
         }
     }
-
 }
 
 extension JNPlayerControlView{
