@@ -1,0 +1,34 @@
+//
+//  JNPlayerTool.swift
+//  JNPlayerKit
+//
+//  Created by mac on 16/10/14.
+//  Copyright © 2016年 Magugi. All rights reserved.
+//
+
+import UIKit
+
+
+let JNTool = JNPlayerTool.sharedInstance
+
+class JNPlayerTool:NSObject {
+    
+    static let sharedInstance = JNPlayerTool()
+    
+    func image(name:String) -> UIImage?{
+        let bundle = NSBundle(forClass: self.classForCoder)
+        let image = UIImage(named: name, inBundle: bundle, compatibleWithTraitCollection: nil)
+        return image
+    }
+    
+    func edges(first:UIView, second:UIView) -> [NSLayoutConstraint]{
+        
+        let left = NSLayoutConstraint(item: first, attribute: .Left, relatedBy: .Equal, toItem: second, attribute: .Left, multiplier: 1, constant: 0)
+        let top = NSLayoutConstraint(item: first, attribute: .Top, relatedBy: .Equal, toItem: second, attribute: .Top, multiplier: 1, constant: 0)
+        let right = NSLayoutConstraint(item: first, attribute: .Right, relatedBy: .Equal, toItem: second, attribute: .Right, multiplier: 1, constant: 0)
+        let bottom = NSLayoutConstraint(item: first, attribute: .Bottom, relatedBy: .Equal, toItem: second, attribute: .Bottom, multiplier: 1, constant: 0)
+    
+        return [left, top, right, bottom]
+    }
+    
+}

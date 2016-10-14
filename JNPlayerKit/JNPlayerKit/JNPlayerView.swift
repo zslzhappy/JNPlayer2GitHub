@@ -277,7 +277,7 @@ private class JNPlayer: UIView{
     
     private func setUpUI(){
         self.translatesAutoresizingMaskIntoConstraints = false
-        self.backgroundColor = UIColor.redColor()
+        self.backgroundColor = UIColor.blackColor()
         self.layer.addSublayer(playerLayer)
         self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspect
     }
