@@ -204,7 +204,7 @@ class JNPlayerControlView: UIView {
             self.layoutIfNeeded()
         }, completion: {completed in
             
-            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 2))
+            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 3))
             
             dispatch_after(delayTime, dispatch_get_main_queue(), {[unowned self] in
                 self.isShow = false
@@ -217,7 +217,7 @@ class JNPlayerControlView: UIView {
         UIView.animateWithDuration(0.35, delay: 0, options: .CurveEaseIn, animations: {
             
             // topControl
-            self.topControlTopConstraint?.constant = -40
+            self.topControlTopConstraint?.constant = -64
             self.topControl.alpha = 0
             
             // bottomControl
@@ -239,15 +239,15 @@ class JNPlayerControlView: UIView {
         
         let backgroundView:UIView = {
             let view = UIView()
-            view.backgroundColor = UIColor.blackColor()
-            view.alpha = 0.5
+            view.backgroundColor = UIColor.clearColor()
+            //view.alpha = 0.5
             view.translatesAutoresizingMaskIntoConstraints = false
             return view
         }()
         
         let backButton:UIButton = {
             let button = UIButton()
-            button.setTitle("返回", forState: .Normal)
+            button.setImage(JNTool.image("jn_player_top_back"), forState: .Normal)
             button.translatesAutoresizingMaskIntoConstraints = false
             return button
         }()
@@ -255,7 +255,7 @@ class JNPlayerControlView: UIView {
         let titleLabel:UILabel = {
             let lable = UILabel()
             lable.textColor = UIColor.whiteColor()
-            lable.font = UIFont.systemFontOfSize(16)
+            lable.font = UIFont.systemFontOfSize(15)
             lable.translatesAutoresizingMaskIntoConstraints = false
             return lable
         }()
@@ -282,17 +282,17 @@ class JNPlayerControlView: UIView {
             self.addSubview(self.titleLabel)
             
             self.addConstraints({[unowned self] in
-                let height = NSLayoutConstraint(item: self, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 40)
+                let height = NSLayoutConstraint(item: self, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 64)
                 
                 let backgroundCons = JNTool.edges(self.backgroundView, second: self)
                 
                 // backButton layout
                 let backLeft = NSLayoutConstraint(item: self.backButton, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 10)
-                let backCenterY = NSLayoutConstraint(item: self.backButton, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
+                let backCenterY = NSLayoutConstraint(item: self.backButton, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 10)
                 
                 // titleLabel layout
-                let titleLeft = NSLayoutConstraint(item: self.titleLabel, attribute: .Left, relatedBy: .Equal, toItem: self.backButton, attribute: .Right, multiplier: 1, constant: 0)
-                let titleCenterY = NSLayoutConstraint(item: self.titleLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
+                let titleLeft = NSLayoutConstraint(item: self.titleLabel, attribute: .Left, relatedBy: .Equal, toItem: self.backButton, attribute: .Right, multiplier: 1, constant: 8)
+                let titleCenterY = NSLayoutConstraint(item: self.titleLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 10)
                 
                 return [height, backLeft, backCenterY, titleLeft, titleCenterY] + backgroundCons
             }())
@@ -344,6 +344,7 @@ class JNPlayerControlView: UIView {
         let pauseButton:UIButton = {
             let button = UIButton()
             button.setImage(JNTool.image("jn_player_pause"), forState: .Normal)
+            button.hidden = true
             return button
         }()
         
@@ -488,13 +489,13 @@ class JNPlayerControlView: UIView {
         
         let fullScreenButton: UIButton = {
             let button = UIButton()
-            button.setTitle("全屏", forState: .Normal)
+            button.setImage(JNTool.image("jn_player_full_screen"), forState: .Normal)
             return button
         }()
         
         let nonFullScreenButton: UIButton = {
             let button = UIButton()
-            button.setTitle("非全屏", forState: .Normal)
+            button.setImage(JNTool.image("jn_player_nonfull_screen"), forState: .Normal)
             return button
         }()
         
@@ -529,6 +530,12 @@ class JNPlayerControlView: UIView {
                 
             })
             
+            [self.fullScreenButton, self.nonFullScreenButton].forEach({item in
+                let height = NSLayoutConstraint(item: item, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 30)
+                let width = NSLayoutConstraint(item: item, attribute: .Width, relatedBy: .Equal, toItem: item, attribute: .Height, multiplier: 1, constant: 0)
+                item.addConstraints([height, width])
+            })
+            
             self.addConstraints({[unowned self] in
                 
                 let backgroundCons = JNTool.edges(self.backgroundView, second: self)
@@ -538,7 +545,7 @@ class JNPlayerControlView: UIView {
                 let fullCenterY = NSLayoutConstraint(item: self.fullScreenButton, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
                 
                 // NonFullscreen button layout
-                let nonFullRight = NSLayoutConstraint(item: self.nonFullScreenButton, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: 0)
+                let nonFullRight = NSLayoutConstraint(item: self.nonFullScreenButton, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: -10)
                 let nonFullCenterY = NSLayoutConstraint(item: self.nonFullScreenButton, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
                 
                 // PlayedTimeLabel layout
@@ -656,17 +663,18 @@ class JNPlayerControlView: UIView {
             
             let progressView:UIProgressView = {
                 let pro = UIProgressView()
-                pro.tintColor = UIColor.greenColor()
-                pro.trackTintColor = UIColor.whiteColor()
+                pro.tintColor = UIColor.whiteColor()
+                pro.trackTintColor = UIColor.grayColor()
                 pro.translatesAutoresizingMaskIntoConstraints = false
                 return pro
             }()
             
-            let slider:UISlider = {
-                let slider = UISlider()
+            let slider:JNSlider = {
+                let slider = JNSlider()
                 slider.translatesAutoresizingMaskIntoConstraints = false
-                slider.minimumTrackTintColor = UIColor.redColor()
+                slider.minimumTrackTintColor = UIColor(red: 255 / 255, green: 206 / 255, blue: 88 / 255, alpha: 1)
                 slider.maximumTrackTintColor = UIColor.clearColor()
+                slider.setThumbImage(JNTool.image("jn_player_slider_thumb"), forState: .Normal)
                 return slider
             }()
             
@@ -699,7 +707,7 @@ class JNPlayerControlView: UIView {
                     // Progress layout
                     let progressLeft = NSLayoutConstraint(item: self.progressView, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
                     let progressRight = NSLayoutConstraint(item: self.progressView, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: 0)
-                    let progressCenterY = NSLayoutConstraint(item: self.progressView, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 0)
+                    let progressCenterY = NSLayoutConstraint(item: self.progressView, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 1)
                     
                     // Slider layout
                     let sliderLeft = NSLayoutConstraint(item: self.slider, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
@@ -713,6 +721,19 @@ class JNPlayerControlView: UIView {
             
             func setUpAction(){
                 
+            }
+            
+            class JNSlider:UISlider{
+                override func trackRectForBounds(bounds: CGRect) -> CGRect {
+                    let rect = super.trackRectForBounds(bounds)
+                    
+                    return CGRect(origin: rect.origin, size: CGSize(width: rect.width, height: 3.5))
+                }
+                
+                override func thumbRectForBounds(bounds: CGRect, trackRect rect: CGRect, value: Float) -> CGRect {
+                    let thumbRect = super.thumbRectForBounds(bounds, trackRect: rect, value: value)
+                    return thumbRect
+                }
             }
         }
     }

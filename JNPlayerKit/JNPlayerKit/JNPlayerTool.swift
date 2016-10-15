@@ -21,6 +21,18 @@ class JNPlayerTool:NSObject {
         return image
     }
     
+    func imageWithImage(image: UIImage?, scaledToSize newSize: CGSize) -> UIImage?
+    {
+        guard image != nil else{return nil}
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 0.0)
+        image!.drawInRect(CGRectMake(0, 0, newSize.width, newSize.height))
+        
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage
+    }
+    
     func edges(first:UIView, second:UIView) -> [NSLayoutConstraint]{
         
         let left = NSLayoutConstraint(item: first, attribute: .Left, relatedBy: .Equal, toItem: second, attribute: .Left, multiplier: 1, constant: 0)
