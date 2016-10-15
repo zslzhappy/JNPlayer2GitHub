@@ -74,6 +74,10 @@ class JNPlayerControlView: UIView {
     }
     
     let timeFormatter = {(seconds: NSTimeInterval) -> String in
+        if seconds.isNaN{
+            return "00:00"
+        }
+        
         let Min = Int(seconds / 60)
         let Sec = Int(seconds % 60)
         return String(format: "%02d:%02d", Min, Sec)
