@@ -23,10 +23,10 @@ class ViewController: UIViewController {
         
         //http://oeb31a0tw.bkt.clouddn.com/新手玩诡术妖姬.avi.avi
         
-        var str:NSString = "http://oeb31a0tw.bkt.clouddn.com/新手玩诡术妖姬.avi.avi?avvod/m3u8/pipeline/da/s/960x640/vb/1000k"
+        var str:NSString = "http://od7vwyosd.bkt.clouddn.com/abababab.avi"
         str = str.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
         
-        let url = NSURL(string: str as String)
+        let url = NSURL(string: "http://od7vwyosd.bkt.clouddn.com/abababab.avi")
         
         self.topPlayerView.play(url!, title: "TopPlayerView")
         
