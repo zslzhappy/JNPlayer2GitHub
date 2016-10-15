@@ -19,7 +19,16 @@ class ViewController: UIViewController {
 
         self.setUpTopPlayer()
         
-        self.topPlayerView.play(NSURL(string: "http://od7vwyosd.bkt.clouddn.com/o_1asev3gvokag1bqb1ohqg6h1ko29.mp4")!, title: "TopPlayerView")
+        //self.topPlayerView.play(NSURL(string: "http://od7vwyosd.bkt.clouddn.com/o_1asev3gvokag1bqb1ohqg6h1ko29.mp4")!, title: "TopPlayerView")
+        
+        //http://oeb31a0tw.bkt.clouddn.com/新手玩诡术妖姬.avi.avi
+        
+        var str:NSString = "http://oeb31a0tw.bkt.clouddn.com/新手玩诡术妖姬.avi.avi?avvod/m3u8/pipeline/da/s/960x640/vb/1000k"
+        str = str.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
+        
+        let url = NSURL(string: str as String)
+        
+        self.topPlayerView.play(url!, title: "TopPlayerView")
         
         self.topPlayerView.backAction = {
             self.navigationController?.popViewControllerAnimated(true)
