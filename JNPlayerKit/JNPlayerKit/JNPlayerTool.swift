@@ -16,6 +16,17 @@ class JNPlayerTool:NSObject {
     static let sharedInstance = JNPlayerTool()
     
     func image(name:String) -> UIImage?{
+        
+        let podBundle = NSBundle(forClass: self.classForCoder)
+        
+        if let bundleURL = podBundle.URLForResource("JNPlayerKit", withExtension: "bundle") {
+            if let bundle = NSBundle(URL: bundleURL) {
+                let image = UIImage(named: name, inBundle: bundle, compatibleWithTraitCollection: nil)
+                return image
+            }
+            
+        }
+        
         let bundle = NSBundle(forClass: self.classForCoder)
         let image = UIImage(named: name, inBundle: bundle, compatibleWithTraitCollection: nil)
         return image
