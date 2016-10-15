@@ -7,9 +7,11 @@
 //
 
 import UIKit
-
+import AVFoundation
 
 let JNTool = JNPlayerTool.sharedInstance
+
+let JNCache = JNPlayerCache.sharedInstance
 
 class JNPlayerTool:NSObject {
     
@@ -52,6 +54,36 @@ class JNPlayerTool:NSObject {
         let bottom = NSLayoutConstraint(item: first, attribute: .Bottom, relatedBy: .Equal, toItem: second, attribute: .Bottom, multiplier: 1, constant: 0)
     
         return [left, top, right, bottom]
+    }
+    
+}
+
+/**
+ 视频播放时间纪录，用于断点播放
+ */
+class JNPlayerCache: NSObject{
+    static let sharedInstance = JNPlayerCache()
+    private let cache:NSCache = {
+        let cache = NSCache()
+        cache.name = "JNPlayerCache"
+        return cache
+    }()
+    
+    subscript(key: String) -> CMTime?{
+        get{
+            if let value = self.cache.objectForKey(key) as? NSValue{
+                return value.CMTimeValue
+            }
+            return kCMTimeZero
+        }
+        set{
+            if let value = newValue{
+                let timeValue = NSValue(CMTime:value)
+                self.cache.setObject(timeValue, forKey: key)
+            }else{
+                self.cache.removeObjectForKey(key)
+            }
+        }
     }
     
 }
