@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -43,11 +44,19 @@
                                     <segue destination="BYZ-38-t0r" kind="show" id="S59-2a-3cY"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CD1-M3-hVn">
+                                <state key="normal" title="Play2"/>
+                                <connections>
+                                    <segue destination="BYZ-38-t0r" kind="show" id="YJv-O3-m5u"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="Zrz-h2-4aT" firstAttribute="centerY" secondItem="qqt-1x-j1U" secondAttribute="centerY" id="FOS-ET-yaA"/>
+                            <constraint firstItem="CD1-M3-hVn" firstAttribute="top" secondItem="Zrz-h2-4aT" secondAttribute="bottom" constant="93" id="ZZq-gv-UOs"/>
                             <constraint firstItem="Zrz-h2-4aT" firstAttribute="centerX" secondItem="qqt-1x-j1U" secondAttribute="centerX" id="iPT-vs-pCq"/>
+                            <constraint firstItem="CD1-M3-hVn" firstAttribute="leading" secondItem="qqt-1x-j1U" secondAttribute="leadingMargin" constant="150" id="sD8-4W-DJ8"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="qgx-jG-2yw"/>
@@ -75,4 +84,7 @@
             <point key="canvasLocation" x="-10.4" y="122.78860569715144"/>
         </scene>
     </scenes>
+    <inferredMetricsTieBreakers>
+        <segue reference="YJv-O3-m5u"/>
+    </inferredMetricsTieBreakers>
 </document>

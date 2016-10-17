@@ -69,7 +69,7 @@ class JNPlayerCache: NSObject{
         return cache
     }()
     
-    subscript(key: String) -> CMTime?{
+    subscript(key: NSString) -> CMTime?{
         get{
             if let value = self.cache.objectForKey(key) as? NSValue{
                 return value.CMTimeValue
@@ -85,5 +85,4 @@ class JNPlayerCache: NSObject{
             }
         }
     }
-    
 }

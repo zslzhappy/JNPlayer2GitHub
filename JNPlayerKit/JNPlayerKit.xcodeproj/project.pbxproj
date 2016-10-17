@@ -19,7 +19,6 @@
 		04FB194D1DAE2BD2007E6020 /* JNPlayerKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04FB19041DAE0872007E6020 /* JNPlayerKit.framework */; };
 		04FB19511DAE3A59007E6020 /* JNPlayerControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FB19501DAE3A59007E6020 /* JNPlayerControlView.swift */; };
 		04FB19531DAE5393007E6020 /* DemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FB19521DAE5393007E6020 /* DemoView.swift */; };
-		04FB19551DAE620F007E6020 /* JNPlayerItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FB19541DAE620F007E6020 /* JNPlayerItem.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,7 +37,6 @@
 		04FB19491DAE2B62007E6020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		04FB19501DAE3A59007E6020 /* JNPlayerControlView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JNPlayerControlView.swift; sourceTree = "<group>"; };
 		04FB19521DAE5393007E6020 /* DemoView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DemoView.swift; sourceTree = "<group>"; };
-		04FB19541DAE620F007E6020 /* JNPlayerItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JNPlayerItem.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,7 +83,6 @@
 				04FB19081DAE0872007E6020 /* Info.plist */,
 				04FB190F1DAE08BA007E6020 /* JNPlayerView.swift */,
 				04FB19501DAE3A59007E6020 /* JNPlayerControlView.swift */,
-				04FB19541DAE620F007E6020 /* JNPlayerItem.swift */,
 				04439FA91DAF8EB5000A3EB9 /* JNPlayerKit.xcassets */,
 				041BCA4D1DB10508007F8B24 /* JNPlayerTool.swift */,
 			);
@@ -225,7 +222,6 @@
 			files = (
 				041BCA4E1DB10508007F8B24 /* JNPlayerTool.swift in Sources */,
 				04FB19101DAE08BA007E6020 /* JNPlayerView.swift in Sources */,
-				04FB19551DAE620F007E6020 /* JNPlayerItem.swift in Sources */,
 				04FB19511DAE3A59007E6020 /* JNPlayerControlView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

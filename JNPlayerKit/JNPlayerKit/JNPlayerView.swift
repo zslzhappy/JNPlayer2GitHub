@@ -9,6 +9,23 @@
 import UIKit
 import AVFoundation
 
+public typealias JNPlayerItem = (URL:String, title:String?)
+
+public protocol JNPlayerViewDelegate: class{
+    
+    // 当前正在播放的视频, 该方法会在加载视频时执行
+    func playerView(player:JNPlayerView, playingItem:JNPlayerItem, index:Int)
+    
+    // 播放完成的视频, 该方法会在视频播放完成时执行
+    func playerView(player:JNPlayerView, playEndItem:JNPlayerItem)
+    
+    // 返回按钮点击回调
+    func playerViewBackAction(player:JNPlayerView)
+    
+    // 播放失败
+    func playerView(player:JNPlayerView, playingItem:JNPlayerItem, error:NSError)
+    
+}
 
 private protocol JNPlayerDelegate: class {
     func jnPlayerStatusChanged(status:JNPlayerStatus)
@@ -19,7 +36,7 @@ private protocol JNPlayerDelegate: class {
 }
 
 
-@objc public protocol JNPlayerControl {
+@objc protocol JNPlayerControl {
     func play()
     func pause()
 }
@@ -45,9 +62,37 @@ public class JNPlayerView: UIView {
         }
     }
     
+    public weak var delegate:JNPlayerViewDelegate? = nil
+    
     public var autoPlay:Bool = true
     
     private var playerControl:JNPlayerControlView = JNPlayerControlView()
+    
+    private var playingIndex:Int{
+        get{
+            guard self.playerItems != nil && self.playingItem != nil else {
+                return 0
+            }
+            return self.playerItems?.indexOf({ (element) -> Bool in
+                return element.URL == playingItem?.URL
+            }) ?? 0
+        }
+    }
+    
+    private var playingItem:JNPlayerItem? = nil{
+        didSet{
+            guard playingItem != nil else{return}
+            self.player.URL = NSURL(string: playingItem!.URL)
+            self.playerControl.title = playingItem?.title
+            self.delegate?.playerView(self, playingItem: playingItem!, index: self.playingIndex)
+        }
+    }
+    
+    private var playerItems:[JNPlayerItem]? = nil{
+        didSet{
+            self.playingItem = playerItems?.first
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -87,23 +132,51 @@ public class JNPlayerView: UIView {
 }
 
 extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
-    public func play(URL:NSURL, title:String? = nil){
-        self.player.URL = URL
-        self.playerControl.title = title
+    
+    public func play(URL:String, title:String? = nil){
+        self.play([(URL, title)])
     }
     
-    public func play(){
+    public func play(items:[JNPlayerItem]){
+        
+        let tmpItems:[JNPlayerItem] = items.map({ (item) -> JNPlayerItem in
+            let urlStr = (item.URL as NSString).stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
+            return (urlStr!, item.title)
+        })
+        
+        self.playerItems = tmpItems
+    }
+    public func play(index:Int){
+        guard index < self.playerItems?.count && index > 0 else{return}
+        self.playerControl.showLoading()
+        self.playingItem = self.playerItems?[index]
+    }
+    
+    // 播放下一个
+    public func playNext(){
+        self.play(self.playingIndex + 1)
+    }
+    
+    // 播放上一个
+    public func playLast(){
+        self.play(self.playingIndex - 1)
+    }
+    
+    
+    @objc internal func play(){
         self.player.play()
         self.status = .Play
     }
     
-    public func pause() {
+    @objc internal func pause() {
         self.player.pause()
         self.status = .Pause
     }
     
     public func back() {
+        self.player.URL = nil
         self.backAction?()
+        self.delegate?.playerViewBackAction(self)
     }
     
     func jnPlayerTimes() -> (total: NSTimeInterval, current: NSTimeInterval) {
@@ -181,6 +254,12 @@ extension JNPlayerView: JNPlayerDelegate{
             }
         case .PlayEnd:
             self.status = .PlayEnd
+            if status == .PlayEnd && self.playingItem != nil{
+                self.delegate?.playerView(self, playEndItem: self.playingItem!)
+            }
+            if self.autoPlay{
+                self.playNext()
+            }
         }
     }
     
@@ -210,6 +289,7 @@ private class JNPlayer: UIView{
             }else{
                 self.playerItem = nil
             }
+            self.player?.replaceCurrentItemWithPlayerItem(self.playerItem)
         }
     }
     
@@ -221,10 +301,24 @@ private class JNPlayer: UIView{
             
             self.playerTimeObserverToken = self.player?.addPeriodicTimeObserverForInterval(time, queue: dispatch_get_main_queue(), usingBlock: {[unowned self] time in
                 
-                // update Slider and Progress
-                let current = CMTimeGetSeconds(self.player!.currentItem!.currentTime())
+                guard self.player?.currentItem != nil else{
+                    return
+                }
                 
-                let total = CMTimeGetSeconds(self.player!.currentItem!.duration)
+                // update Slider and Progress
+                let currentTime = self.player!.currentItem!.currentTime()
+                let current = CMTimeGetSeconds(currentTime)
+                
+                let totalTime = self.player!.currentItem!.duration
+                let total = CMTimeGetSeconds(totalTime)
+                
+                if let urlStr = self.URL?.absoluteString{
+                    if currentTime == totalTime{
+                        JNCache[urlStr] = nil
+                    }else{
+                        JNCache[urlStr] = currentTime
+                    }
+                }
                 
                 self.delegate?.jnPlayerTimeChanged(current, totalTime: total)
                 
@@ -244,7 +338,6 @@ private class JNPlayer: UIView{
     
     private var playerItem:AVPlayerItem? = nil{
         didSet{
-            
             if let _ = playerItem{
                 playerItem?.addObserver(self, forKeyPath: PlayerItemStatusKey, options: NSKeyValueObservingOptions.New, context: nil)
                 playerItem?.addObserver(self, forKeyPath: PlayerLoadTimeRangeKey, options: NSKeyValueObservingOptions.New, context: nil)
@@ -261,6 +354,7 @@ private class JNPlayer: UIView{
             playerItem?.removeObserver(self, forKeyPath: PlayerLoadTimeRangeKey, context: nil)
             playerItem?.removeObserver(self, forKeyPath: PlaybackBufferEmptyKey, context: nil)
             playerItem?.removeObserver(self, forKeyPath: PlaybackBufferLikelyToKeepUpKey, context: nil)
+            NSNotificationCenter.defaultCenter().removeObserver(self)
         }
     }
     
@@ -338,7 +432,13 @@ private class JNPlayer: UIView{
     
     @objc func playerDidPlayEnd(notification:NSNotification){
         if let item = notification.object as? AVPlayerItem where item == self.player?.currentItem{
+            // 清除播放完视频的时间点
+            if let urlStr = self.URL?.absoluteString{
+                JNCache[urlStr] = nil
+            }
+            
             self.delegate?.jnPlayerStatusChanged(.PlayEnd)
+            
         }
     }
     

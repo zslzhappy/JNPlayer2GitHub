@@ -164,6 +164,7 @@ class JNPlayerControlView: UIView {
         self.middleControl.replayAction = {[unowned self] in self.delegate?.play()}
         
         self.bottomControl.sliderValueChangedAction = {[unowned self] value in
+            
             let totalTime = self.delegate?.jnPlayerTimes().total ?? 0
             
             let currentTime = totalTime * Double(value)
@@ -208,10 +209,12 @@ class JNPlayerControlView: UIView {
             self.layoutIfNeeded()
         }, completion: {completed in
             
-            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 3))
+            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 7))
             
             dispatch_after(delayTime, dispatch_get_main_queue(), {[unowned self] in
-                self.isShow = false
+                if self.isShow{
+                    self.isShow = false
+                }
             })
         })
         
@@ -327,9 +330,11 @@ class JNPlayerControlView: UIView {
                 case .Pause:
                     self.pauseButton.hidden = true
                     self.playButton.hidden = false
+                    self.replayButton.hidden = true
                 case .Play:
                     self.pauseButton.hidden = false
                     self.playButton.hidden = true
+                    self.replayButton.hidden = true
                 case .PlayEnd:
                     self.pauseButton.hidden = true
                     self.playButton.hidden = true
@@ -752,5 +757,9 @@ class JNPlayerControlView: UIView {
 extension JNPlayerControlView{
     func closeLoading() {
         self.middleControl.closeLoading()
+    }
+    
+    func showLoading(){
+        self.middleControl.loadingView.startAnimating()
     }
 }

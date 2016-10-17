@@ -12,15 +12,17 @@ import JNPlayerKit
 class ViewController: UIViewController {
 
     let topPlayerView:JNPlayerView = JNPlayerView()
-
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         self.setUpTopPlayer()
         
-        self.topPlayerView.play(NSURL(string: "http://od7vwyosd.bkt.clouddn.com/o_1asev3gvokag1bqb1ohqg6h1ko29.mp4")!, title: "TopPlayerView")
+        self.topPlayerView.delegate = self
         
+        //self.topPlayerView.play("http://od7vwyosd.bkt.clouddn.com/o_1asev3gvokag1bqb1ohqg6h1ko29.mp4", title: "TopPlayerView")
+        
+        self.topPlayerView.play([("http://baobab.wdjcdn.com/1457162012752491010143.mp4", "first"), ("http://baobab.wdjcdn.com/14571455324031.mp4", "second"), ("http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4", "third")])
         
         self.topPlayerView.backAction = {
             self.navigationController?.popViewControllerAnimated(true)
@@ -67,6 +69,28 @@ class ViewController: UIViewController {
         super.viewWillAppear(animated)
     }
     
+}
+
+extension ViewController: JNPlayerViewDelegate{
+    // 当前正在播放的视频, 该方法会在加载视频时执行
+    func playerView(player:JNPlayerView, playingItem:JNPlayerItem, index:Int){
+        print("playingItem:\(playingItem)  index:\(index)")
+    }
+    
+    // 播放完成的视频, 该方法会在视频播放完成时执行
+    func playerView(player:JNPlayerView, playEndItem:JNPlayerItem){
+        print("playedItme:\(playEndItem)")
+    }
+    
+    // 返回按钮点击回调
+    func playerViewBackAction(player:JNPlayerView){
+        print("backAction")
+    }
+    
+    // 播放失败
+    func playerView(player:JNPlayerView, playingItem:JNPlayerItem, error:NSError){
+        print("playerItemError:\(playingItem)")
+    }
 }
 
 extension ViewController{
