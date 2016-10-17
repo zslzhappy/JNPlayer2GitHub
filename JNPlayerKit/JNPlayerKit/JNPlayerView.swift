@@ -68,7 +68,7 @@ public class JNPlayerView: UIView {
     
     private var playerControl:JNPlayerControlView = JNPlayerControlView()
     
-    private var playingIndex:Int{
+    public var playingIndex:Int{
         get{
             guard self.playerItems != nil && self.playingItem != nil else {
                 return 0
@@ -456,6 +456,13 @@ extension JNPlayer:JNPlayerControl{
         if self.player?.currentItem?.duration == self.player?.currentItem?.currentTime(){
             self.player?.seekToTime(kCMTimeZero)
         }
+        
+        if let urlStr = self.URL?.absoluteString{
+            if let time = JNCache[urlStr]{
+                self.player?.seekToTime(time)
+            }
+        }
+        
         self.playerLayer.player?.play()
     }
     
