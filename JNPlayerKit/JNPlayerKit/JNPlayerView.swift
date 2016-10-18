@@ -174,6 +174,7 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     }
     
     public func back() {
+        self.changeDeviceOrientation(false)
         self.player.URL = nil
         self.backAction?()
         self.delegate?.playerViewBackAction(self)
@@ -223,6 +224,14 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
                 return
             }
             
+            self.changeDeviceOrientation(true)
+        }else{
+            self.changeDeviceOrientation(false)
+        }
+    }
+    
+    func changeDeviceOrientation(isHorizontal: Bool){
+        if isHorizontal{
             UIDevice.currentDevice().setValue(UIInterfaceOrientation.LandscapeRight.rawValue, forKey: "orientation")
             UIApplication.sharedApplication().setStatusBarHidden(false, withAnimation: UIStatusBarAnimation.Fade)
             UIApplication.sharedApplication().setStatusBarOrientation(UIInterfaceOrientation.LandscapeRight, animated: false)
@@ -441,7 +450,6 @@ private class JNPlayer: UIView{
             
         }
     }
-    
     
     deinit {
         self.URL = nil
