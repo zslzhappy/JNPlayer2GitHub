@@ -29,9 +29,25 @@ class JNPlayerControlView: UIView {
     
     weak var delegate:JNPlayerControlDelegate? = nil
     
+    // 上次用户交互时间，用于判断是否隐藏控制器
+    private var lastInteract:NSDate = NSDate(){
+        didSet{
+            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 7))
+            
+            dispatch_after(delayTime, dispatch_get_main_queue(), {[unowned self] in
+                if self.lastInteract.timeIntervalSinceNow < -5{
+                    if self.isShow{
+                        self.isShow = false
+                    }
+                }
+            })
+        }
+    }
+    
     // ControlView 当前是否显示
     var isShow:Bool = true{
         didSet{
+            self.lastInteract = NSDate()
             if isShow{
                 self.showControl()
             }else{
@@ -155,15 +171,29 @@ class JNPlayerControlView: UIView {
     
     func setUpAction(){
         
-        self.topControl.backAction = {[unowned self] in self.delegate?.back()}
+        self.topControl.backAction = {[unowned self] in
+            self.lastInteract = NSDate()
+            self.delegate?.back()
+        }
         
-        self.middleControl.playAction = {[unowned self] in self.delegate?.play()}
+        self.middleControl.playAction = {[unowned self] in
+            self.lastInteract = NSDate()
+            self.delegate?.play()
+        }
         
-        self.middleControl.pauseAction = {[unowned self] in self.delegate?.pause()}
+        self.middleControl.pauseAction = {[unowned self] in
+            self.lastInteract = NSDate()
+            self.delegate?.pause()
+        }
         
-        self.middleControl.replayAction = {[unowned self] in self.delegate?.play()}
+        self.middleControl.replayAction = {[unowned self] in
+            self.lastInteract = NSDate()
+            self.delegate?.play()
+        }
         
         self.bottomControl.sliderValueChangedAction = {[unowned self] value in
+            
+            self.lastInteract = NSDate()
             
             let totalTime = self.delegate?.jnPlayerTimes().total ?? 0
             
@@ -176,10 +206,12 @@ class JNPlayerControlView: UIView {
         }
         
         self.bottomControl.fullScreenAction = {[unowned self] in
+            self.lastInteract = NSDate()
             self.delegate?.jnPlayerFullScreen(true)
         }
         
         self.bottomControl.nonFullScreenAction = {[unowned self] in
+            self.lastInteract = NSDate()
             self.delegate?.jnPlayerFullScreen(false)
         }
         
@@ -188,6 +220,7 @@ class JNPlayerControlView: UIView {
     }
     
     func tapAction(tap:UITapGestureRecognizer){
+        //self.lastInteract = NSDate()
         self.isShow = !self.isShow
     }
     
@@ -207,16 +240,7 @@ class JNPlayerControlView: UIView {
             self.middleControl.alpha = 1
             
             self.layoutIfNeeded()
-        }, completion: {completed in
-            
-            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 7))
-            
-            dispatch_after(delayTime, dispatch_get_main_queue(), {[unowned self] in
-                if self.isShow{
-                    self.isShow = false
-                }
-            })
-        })
+        }, completion: nil)
         
     }
     
@@ -580,17 +604,10 @@ class JNPlayerControlView: UIView {
                 return [fullRight, fullCenterY, nonFullRight, nonFullCenterY, playedLeft, playedCenterY, totalRight, totalCenterY, progressLeft, progressTop, progressRight, progressBottom] + backgroundCons
             }())
             
-            
-            let currentOrient = UIApplication.sharedApplication().statusBarOrientation
-            
-            switch currentOrient {
-            case .LandscapeRight, .LandscapeLeft:
+            if JNTool.deviceIsHorizontal(){
                 self.nonFullScreenButton.hidden = false
                 self.fullScreenButton.hidden = true
-            case .Portrait:
-                self.nonFullScreenButton.hidden = true
-                self.fullScreenButton.hidden = false
-            default:
+            }else{
                 self.nonFullScreenButton.hidden = true
                 self.fullScreenButton.hidden = false
             }
@@ -612,18 +629,12 @@ class JNPlayerControlView: UIView {
         }
         
         func screenOrientionChanged(notification:NSNotification){
-            
-            let orient = UIApplication.sharedApplication().statusBarOrientation
-            
-            switch orient {
-            case .Portrait:
-                self.nonFullScreenButton.hidden = true
-                self.fullScreenButton.hidden = false
-            case .LandscapeRight, .LandscapeLeft:
+            if JNTool.deviceIsHorizontal(){
                 self.nonFullScreenButton.hidden = false
                 self.fullScreenButton.hidden = true
-            default:
-                print("")
+            }else{
+                self.nonFullScreenButton.hidden = true
+                self.fullScreenButton.hidden = false
             }
         }
         

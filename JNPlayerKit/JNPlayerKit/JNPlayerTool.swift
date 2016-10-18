@@ -56,6 +56,15 @@ class JNPlayerTool:NSObject {
         return [left, top, right, bottom]
     }
     
+    // 当前设备是否为横屏
+    func deviceIsHorizontal() -> Bool{
+        let currentOrient = UIApplication.sharedApplication().statusBarOrientation
+        if currentOrient == .LandscapeRight || currentOrient == .LandscapeLeft{
+            return true
+        }
+        return false
+    }
+    
 }
 
 /**

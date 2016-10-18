@@ -174,10 +174,13 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     }
     
     public func back() {
-        self.changeDeviceOrientation(false)
-        self.player.URL = nil
-        self.backAction?()
-        self.delegate?.playerViewBackAction(self)
+        if JNTool.deviceIsHorizontal(){
+            self.changeDeviceOrientation(false)
+        }else{
+            self.player.URL = nil
+            self.backAction?()
+            self.delegate?.playerViewBackAction(self)
+        }
     }
     
     func jnPlayerTimes() -> (total: NSTimeInterval, current: NSTimeInterval) {
