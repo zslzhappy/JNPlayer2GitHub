@@ -287,6 +287,7 @@ class JNPlayerControlView: UIView {
             let lable = UILabel()
             lable.textColor = UIColor.whiteColor()
             lable.font = UIFont.systemFontOfSize(15)
+            lable.textAlignment = .Left
             lable.translatesAutoresizingMaskIntoConstraints = false
             return lable
         }()
@@ -324,14 +325,15 @@ class JNPlayerControlView: UIView {
                 let backgroundCons = JNTool.edges(self.backgroundView, second: self)
                 
                 // backButton layout
-                let backLeft = NSLayoutConstraint(item: self.backButton, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 10)
+                let backLeft = NSLayoutConstraint(item: self.backButton, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
                 let backCenterY = NSLayoutConstraint(item: self.backButton, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 10)
                 
                 // titleLabel layout
-                let titleLeft = NSLayoutConstraint(item: self.titleLabel, attribute: .Left, relatedBy: .Equal, toItem: self.backButton, attribute: .Right, multiplier: 1, constant: 8)
+                let titleLeft = NSLayoutConstraint(item: self.titleLabel, attribute: .Left, relatedBy: .Equal, toItem: self.backButton, attribute: .Right, multiplier: 1, constant: 1)
                 let titleCenterY = NSLayoutConstraint(item: self.titleLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1, constant: 10)
+                let titleRight = NSLayoutConstraint(item: self.titleLabel, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: -10)
                 
-                return [height, backLeft, backCenterY, titleLeft, titleCenterY] + backgroundCons
+                return [height, backLeft, backCenterY, titleLeft, titleCenterY, titleRight] + backgroundCons
             }())
             self.layoutIfNeeded()
         }
