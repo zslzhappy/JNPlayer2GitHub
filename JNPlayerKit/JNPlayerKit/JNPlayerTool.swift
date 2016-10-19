@@ -75,6 +75,7 @@ class JNPlayerCache: NSObject{
     private let cache:NSCache = {
         let cache = NSCache()
         cache.name = "JNPlayerCache"
+        cache.countLimit = 15
         return cache
     }()
     

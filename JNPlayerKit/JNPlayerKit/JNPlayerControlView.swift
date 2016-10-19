@@ -313,7 +313,7 @@ class JNPlayerControlView: UIView {
             self.addSubview(self.titleLabel)
             
             self.backButton.addConstraints({[unowned self] in
-                let width = NSLayoutConstraint(item: self.backButton, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 20)
+                let width = NSLayoutConstraint(item: self.backButton, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 40)
                 let height = NSLayoutConstraint(item: self.backButton, attribute: .Height, relatedBy: .Equal, toItem: self.backButton, attribute: .Width, multiplier: 1, constant: 0)
                 return [width, height]
             }())
@@ -726,7 +726,7 @@ class JNPlayerControlView: UIView {
                 let progressHeight = NSLayoutConstraint(item: self.progressView, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 3)
                 self.progressView.addConstraint(progressHeight)
 
-                let sliderHeight = NSLayoutConstraint(item: self.slider, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 3)
+                let sliderHeight = NSLayoutConstraint(item: self.slider, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 30)
                 self.slider.addConstraint(sliderHeight)
                 
                 self.addConstraints({[unowned self] in
