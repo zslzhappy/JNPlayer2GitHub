@@ -96,6 +96,7 @@ public class JNPlayerView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.appWillResignActiveNotification(_:)), name: UIApplicationWillResignActiveNotification, object: nil)
         self.setUpUI()
     }
     
@@ -128,6 +129,14 @@ public class JNPlayerView: UIView {
             let bottom = NSLayoutConstraint(item: self.playerControl, attribute: .Bottom, relatedBy: .Equal, toItem: self, attribute: .Bottom, multiplier: 1, constant: 0)
             return [left, top, right, bottom]
         }())
+    }
+    
+    func appWillResignActiveNotification(notification:NSNotification){
+        self.pause()
+    }
+    
+    deinit{
+        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
 }
 
