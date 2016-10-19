@@ -142,8 +142,14 @@ public class JNPlayerView: UIView {
 
 extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     
-    public func play(URL:String, title:String? = nil){
-        self.play([(URL, title)])
+    public func play(URL:String?, title:String? = nil){
+        guard URL != nil else {
+            self.player.URL = nil
+            self.playerItems = nil
+            return
+        }
+        
+        self.play([(URL!, title)])
     }
     
     public func play(items:[JNPlayerItem]){

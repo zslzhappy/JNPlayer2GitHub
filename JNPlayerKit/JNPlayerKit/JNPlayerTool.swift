@@ -70,28 +70,29 @@ class JNPlayerTool:NSObject {
 /**
  视频播放时间纪录，用于断点播放
  */
-class JNPlayerCache: NSObject{
+class JNPlayerCache: NSObject, NSCacheDelegate{
     static let sharedInstance = JNPlayerCache()
-    private let cache:NSCache = {
-        let cache = NSCache()
-        cache.name = "JNPlayerCache"
-        cache.countLimit = 15
-        return cache
-    }()
+    private var cache:[String: (CMTime, NSTimeInterval)] = [:]
     
-    subscript(key: NSString) -> CMTime?{
+    subscript(key: String) -> CMTime?{
         get{
-            if let value = self.cache.objectForKey(key) as? NSValue{
-                return value.CMTimeValue
-            }
-            return kCMTimeZero
+            return self.cache[key]?.0 ?? kCMTimeZero
         }
         set{
-            if let value = newValue{
-                let timeValue = NSValue(CMTime:value)
-                self.cache.setObject(timeValue, forKey: key)
+            if self.cache.count > 20{
+                var lock = OS_SPINLOCK_INIT
+                OSSpinLockLock(&lock)
+                
+                self.cache.sort({ $0.1.1 < $1.1.1}).map({$0.0})[0...4].forEach({[unowned self] key in
+                    self.cache.removeValueForKey(key)
+                    })
+                
+                OSSpinLockUnlock(&lock)
+            }
+            if let _ = newValue{
+                self.cache[key] = (newValue!, NSDate().timeIntervalSince1970)
             }else{
-                self.cache.removeObjectForKey(key)
+                self.cache.removeValueForKey(key)
             }
         }
     }
