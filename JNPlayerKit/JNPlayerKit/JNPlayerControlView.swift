@@ -270,8 +270,8 @@ class JNPlayerControlView: UIView {
         
         let backgroundView:UIView = {
             let view = UIView()
-            view.backgroundColor = UIColor.clearColor()
-            //view.alpha = 0.5
+            view.backgroundColor = UIColor.blackColor()
+            view.alpha = 0.5
             view.translatesAutoresizingMaskIntoConstraints = false
             return view
         }()
