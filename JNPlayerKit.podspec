@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "JNPlayerKit"
-  s.version          = "0.1.8"
+  s.version          = "0.1.9"
   s.summary          = "Video Player Using Swift, based on AVPlayer"
 
   s.description      = <<-DESC
@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
 
   s.license          = 'MIT'
   s.author           = { "ZTGravity" => "ztgravity@163.com" }
-  s.source           = { :git => "https://git.coding.net/followme/JNPlayerKit.git", :tag => s.version.to_s }
+  s.source           = { :git => "https://git.coding.net/magugi/JNPlayerKit.git", :tag => s.version.to_s }
 
   s.ios.deployment_target = '8.0'
 

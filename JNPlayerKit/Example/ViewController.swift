@@ -22,7 +22,7 @@ class ViewController: UIViewController {
         
         //self.topPlayerView.play("http://od7vwyosd.bkt.clouddn.com/o_1asev3gvokag1bqb1ohqg6h1ko29.mp4", title: "TopPlayerView")
         
-        self.topPlayerView.play([("http://baobab.wdjcdn.com/1457162012752491010143.mp4", "first"), ("http://baobab.wdjcdn.com/14571455324031.mp4", "second"), ("http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4", "third")])
+        self.topPlayerView.play([("http://baobab.wdjcdn.com/1457162012752491010143.mp4", "firstAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), ("http://baobab.wdjcdn.com/14571455324031.mp4", "second"), ("http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4", "third")])
         
         self.topPlayerView.backAction = {
             self.navigationController?.popViewControllerAnimated(true)
@@ -67,6 +67,11 @@ class ViewController: UIViewController {
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.topPlayerView.play(nil)
     }
     
 }
