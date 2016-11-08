@@ -30,9 +30,9 @@ public protocol JNPlayerViewDelegate: class{
 private protocol JNPlayerDelegate: class {
     func jnPlayerStatusChanged(status:JNPlayerStatus)
     
-    func jnPlayerTimeChanged(currentTime: NSTimeInterval, totalTime:NSTimeInterval)
+    func jnPlayerTimeChanged(currentTime: TimeInterval, totalTime:TimeInterval)
 
-    func jnPlayerLoadedChanged(loadedTime: NSTimeInterval, totalTime: NSTimeInterval)
+    func jnPlayerLoadedChanged(loadedTime: TimeInterval, totalTime: TimeInterval)
 }
 
 
@@ -54,7 +54,7 @@ public class JNPlayerView: UIView {
     
     public var backAction:(() -> Void)?
     
-    private var player:JNPlayer = JNPlayer()
+    fileprivate var player:JNPlayer = JNPlayer()
     
     public var status:JNPlayerStatus = .Pause{
         didSet{
@@ -66,29 +66,31 @@ public class JNPlayerView: UIView {
     
     public var autoPlay:Bool = true
     
-    private var playerControl:JNPlayerControlView = JNPlayerControlView()
+    fileprivate var playerControl:JNPlayerControlView = JNPlayerControlView()
     
     public var playingIndex:Int{
         get{
             guard self.playerItems != nil && self.playingItem != nil else {
                 return 0
             }
-            return self.playerItems?.indexOf({ (element) -> Bool in
+            return self.playerItems?.index(where: { (element) -> Bool in
                 return element.URL == playingItem?.URL
             }) ?? 0
         }
     }
     
-    private var playingItem:JNPlayerItem? = nil{
+    fileprivate var playingItem:JNPlayerItem? = nil{
         didSet{
             guard playingItem != nil else{return}
-            self.player.URL = NSURL(string: playingItem!.URL)
+            self.player.url = URL(string: playingItem!.URL)
             self.playerControl.title = playingItem?.title
-            self.delegate?.playerView(self, playingItem: playingItem!, index: self.playingIndex)
+            
+            self.delegate?.playerView(player: self, playingItem: playingItem!, index: playingIndex)
+            //self.delegate?.playerView(self, playingItem: playingItem!, index: self.playingIndex)
         }
     }
     
-    private var playerItems:[JNPlayerItem]? = nil{
+    fileprivate var playerItems:[JNPlayerItem]? = nil{
         didSet{
             self.playingItem = playerItems?.first
         }
@@ -96,7 +98,7 @@ public class JNPlayerView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.appWillResignActiveNotification(_:)), name: UIApplicationWillResignActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.appWillResignActiveNotification(notification:)), name: NSNotification.Name.UIApplicationWillResignActive, object: nil)
         self.setUpUI()
     }
     
@@ -105,17 +107,17 @@ public class JNPlayerView: UIView {
         self.setUpUI()
     }
     
-    private func setUpUI(){
+    fileprivate func setUpUI(){
         self.translatesAutoresizingMaskIntoConstraints = false
         
         // Player
         self.addSubview(self.player)
         self.player.delegate = self
         self.addConstraints({[unowned self] in
-            let left = NSLayoutConstraint(item: self.player, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
-            let top = NSLayoutConstraint(item: self.player, attribute: .Top, relatedBy: .Equal, toItem: self, attribute: .Top, multiplier: 1, constant: 0)
-            let right = NSLayoutConstraint(item: self.player, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: 0)
-            let bottom = NSLayoutConstraint(item: self.player, attribute: .Bottom, relatedBy: .Equal, toItem: self, attribute: .Bottom, multiplier: 1, constant: 0)
+            let left = NSLayoutConstraint(item: self.player, attribute: .left, relatedBy: .equal, toItem: self, attribute: .left, multiplier: 1, constant: 0)
+            let top = NSLayoutConstraint(item: self.player, attribute: .top, relatedBy: .equal, toItem: self, attribute: .top, multiplier: 1, constant: 0)
+            let right = NSLayoutConstraint(item: self.player, attribute: .right, relatedBy: .equal, toItem: self, attribute: .right, multiplier: 1, constant: 0)
+            let bottom = NSLayoutConstraint(item: self.player, attribute: .bottom, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1, constant: 0)
             return [left, top, right, bottom]
         }())
         
@@ -123,10 +125,10 @@ public class JNPlayerView: UIView {
         self.addSubview(self.playerControl)
         self.playerControl.delegate = self
         self.addConstraints({[unowned self] in
-            let left = NSLayoutConstraint(item: self.playerControl, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 0)
-            let top = NSLayoutConstraint(item: self.playerControl, attribute: .Top, relatedBy: .Equal, toItem: self, attribute: .Top, multiplier: 1, constant: 0)
-            let right = NSLayoutConstraint(item: self.playerControl, attribute: .Right, relatedBy: .Equal, toItem: self, attribute: .Right, multiplier: 1, constant: 0)
-            let bottom = NSLayoutConstraint(item: self.playerControl, attribute: .Bottom, relatedBy: .Equal, toItem: self, attribute: .Bottom, multiplier: 1, constant: 0)
+            let left = NSLayoutConstraint(item: self.playerControl, attribute: .left, relatedBy: .equal, toItem: self, attribute: .left, multiplier: 1, constant: 0)
+            let top = NSLayoutConstraint(item: self.playerControl, attribute: .top, relatedBy: .equal, toItem: self, attribute: .top, multiplier: 1, constant: 0)
+            let right = NSLayoutConstraint(item: self.playerControl, attribute: .right, relatedBy: .equal, toItem: self, attribute: .right, multiplier: 1, constant: 0)
+            let bottom = NSLayoutConstraint(item: self.playerControl, attribute: .bottom, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1, constant: 0)
             return [left, top, right, bottom]
         }())
     }
@@ -136,7 +138,7 @@ public class JNPlayerView: UIView {
     }
     
     deinit{
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -144,37 +146,37 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     
     public func play(URL:String?, title:String? = nil){
         guard URL != nil else {
-            self.player.URL = nil
+            self.player.url = nil
             self.playerItems = nil
             return
         }
         
-        self.play([(URL!, title)])
+        self.play(items: [(URL!, title)])
     }
     
     public func play(items:[JNPlayerItem]){
         
         let tmpItems:[JNPlayerItem] = items.map({ (item) -> JNPlayerItem in
-            let urlStr = (item.URL as NSString).stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
+            let urlStr = (item.URL as NSString).addingPercentEncoding(withAllowedCharacters: NSCharacterSet.urlQueryAllowed)
             return (urlStr!, item.title)
         })
         
         self.playerItems = tmpItems
     }
     public func play(index:Int){
-        guard index < self.playerItems?.count && index > 0 else{return}
+        guard index < (self.playerItems?.count ?? 0) && index > 0 else{return}
         self.playerControl.showLoading()
         self.playingItem = self.playerItems?[index]
     }
     
     // 播放下一个
     public func playNext(){
-        self.play(self.playingIndex + 1)
+        self.play(index: self.playingIndex + 1)
     }
     
     // 播放上一个
     public func playLast(){
-        self.play(self.playingIndex - 1)
+        self.play(index: self.playingIndex - 1)
     }
     
     
@@ -190,15 +192,15 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     
     public func back() {
         if JNTool.deviceIsHorizontal(){
-            self.changeDeviceOrientation(false)
+            self.changeDeviceOrientation(isHorizontal: false)
         }else{
-            self.player.URL = nil
+            self.player.url = nil
             self.backAction?()
-            self.delegate?.playerViewBackAction(self)
+            self.delegate?.playerViewBackAction(player: self)
         }
     }
     
-    func jnPlayerTimes() -> (total: NSTimeInterval, current: NSTimeInterval) {
+    func jnPlayerTimes() -> (total: TimeInterval, current: TimeInterval) {
         if let totalTime = self.player.player?.currentItem?.duration, let currentTime = self.player.player?.currentItem?.currentTime(){
             
             if totalTime == currentTime{
@@ -211,14 +213,14 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         }
     }
     
-    func jnPlayerSeekTime(time: NSTimeInterval) {
+    func jnPlayerSeekTime(time: TimeInterval) {
         
         if time.isNaN {
             return
         }
-        if self.player.player?.currentItem?.status == AVPlayerItemStatus.ReadyToPlay {
+        if self.player.player?.currentItem?.status == AVPlayerItemStatus.readyToPlay {
             let draggedTime = CMTimeMake(Int64(time), 1)
-            self.player.player?.seekToTime(draggedTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero, completionHandler: { (success) in
+            self.player.player?.seek(to: draggedTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero, completionHandler: { (success) in
                 
             })
         }
@@ -229,34 +231,34 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
             
             var supportFullScreen:Bool = false
             
-            if let support = UIApplication.sharedApplication().delegate?.application?(UIApplication.sharedApplication(), supportedInterfaceOrientationsForWindow: UIApplication.sharedApplication().keyWindow){
-            
-                supportFullScreen = support.contains([.LandscapeLeft, .LandscapeRight])
+            let support = UIApplication.shared.delegate?.application?(UIApplication.shared, supportedInterfaceOrientationsFor: UIApplication.shared.keyWindow)
+            if (support != nil){
+                supportFullScreen = support!.contains([.landscapeLeft, .landscapeRight])
             }else{
-                let support = UIApplication.sharedApplication().supportedInterfaceOrientationsForWindow(UIApplication.sharedApplication().keyWindow)
+                let support = UIApplication.shared.supportedInterfaceOrientations(for: UIApplication.shared.keyWindow)
                 
-                supportFullScreen = support.contains([.LandscapeLeft, .LandscapeRight])
+                supportFullScreen = support.contains([.landscapeLeft, .landscapeRight])
             }
             
             guard supportFullScreen else {
                 return
             }
             
-            self.changeDeviceOrientation(true)
+            self.changeDeviceOrientation(isHorizontal: true)
         }else{
-            self.changeDeviceOrientation(false)
+            self.changeDeviceOrientation(isHorizontal: false)
         }
     }
     
     func changeDeviceOrientation(isHorizontal: Bool){
         if isHorizontal{
-            UIDevice.currentDevice().setValue(UIInterfaceOrientation.LandscapeRight.rawValue, forKey: "orientation")
-            UIApplication.sharedApplication().setStatusBarHidden(false, withAnimation: UIStatusBarAnimation.Fade)
-            UIApplication.sharedApplication().setStatusBarOrientation(UIInterfaceOrientation.LandscapeRight, animated: false)
+            UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+            UIApplication.shared.setStatusBarHidden(false, with: UIStatusBarAnimation.fade)
+            UIApplication.shared.setStatusBarOrientation(UIInterfaceOrientation.landscapeRight, animated: false)
         }else{
-            UIDevice.currentDevice().setValue(UIInterfaceOrientation.Portrait.rawValue, forKey: "orientation")
-            UIApplication.sharedApplication().setStatusBarHidden(false, withAnimation: UIStatusBarAnimation.Fade)
-            UIApplication.sharedApplication().setStatusBarOrientation(UIInterfaceOrientation.Portrait, animated: false)
+            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+            UIApplication.shared.setStatusBarHidden(false, with: UIStatusBarAnimation.fade)
+            UIApplication.shared.setStatusBarOrientation(UIInterfaceOrientation.portrait, animated: false)
         }
     }
 }
@@ -271,7 +273,7 @@ extension JNPlayerView: JNPlayerDelegate{
         case .Pause, .Play:
             print("")
         case .ReadyToPlay:
-            if let second = self.player.player?.currentTime().seconds where second <= 0{
+            if let second = self.player.player?.currentTime().seconds, second <= 0{
                 self.playerControl.closeLoading()
                 
                 if self.autoPlay{
@@ -282,7 +284,7 @@ extension JNPlayerView: JNPlayerDelegate{
         case .PlayEnd:
             self.status = .PlayEnd
             if status == .PlayEnd && self.playingItem != nil{
-                self.delegate?.playerView(self, playEndItem: self.playingItem!)
+                self.delegate?.playerView(player: self, playEndItem: self.playingItem!)
             }
             if self.autoPlay{
                 self.playNext()
@@ -290,13 +292,13 @@ extension JNPlayerView: JNPlayerDelegate{
         }
     }
     
-    private func jnPlayerTimeChanged(currentTime: NSTimeInterval, totalTime: NSTimeInterval) {
+    fileprivate func jnPlayerTimeChanged(currentTime: TimeInterval, totalTime: TimeInterval) {
         self.playerControl.playProgress = Float(currentTime / totalTime)
         self.playerControl.currentTime = currentTime
         self.playerControl.totalTime = totalTime
     }
     
-    private func jnPlayerLoadedChanged(loadedTime: NSTimeInterval, totalTime: NSTimeInterval) {
+    fileprivate func jnPlayerLoadedChanged(loadedTime: TimeInterval, totalTime: TimeInterval) {
         self.playerControl.bufferProgress = Float(loadedTime / totalTime)
     }
 }
@@ -305,18 +307,18 @@ private class JNPlayer: UIView{
 
     let playerLayer = AVPlayerLayer()
     
-    var playerTimeObserverToken:AnyObject?
+    var playerTimeObserverToken:Any?
     
     weak var delegate:JNPlayerDelegate? = nil
     
-    var URL:NSURL? = nil{
+    var url:URL? = nil{
         didSet{
-            if let _ = URL{
-                self.playerItem = AVPlayerItem(URL: URL!)
+            if let _ = url{
+                self.playerItem = AVPlayerItem(url: url!)
             }else{
                 self.playerItem = nil
             }
-            self.player?.replaceCurrentItemWithPlayerItem(self.playerItem)
+            self.player?.replaceCurrentItem(with: self.playerItem)
         }
     }
     
@@ -326,8 +328,7 @@ private class JNPlayer: UIView{
             let timeScale = CMTimeScale(NSEC_PER_SEC)
             let time = CMTime(seconds: 0.5, preferredTimescale: timeScale)
             
-            self.playerTimeObserverToken = self.player?.addPeriodicTimeObserverForInterval(time, queue: dispatch_get_main_queue(), usingBlock: {[unowned self] time in
-                
+            self.playerTimeObserverToken = self.player?.addPeriodicTimeObserver(forInterval: time, queue: DispatchQueue.main, using: {[unowned self] time in
                 guard self.player?.currentItem != nil else{
                     return
                 }
@@ -339,7 +340,7 @@ private class JNPlayer: UIView{
                 let totalTime = self.player!.currentItem!.duration
                 let total = CMTimeGetSeconds(totalTime)
                 
-                if let urlStr = self.URL?.absoluteString{
+                if let urlStr = self.url?.absoluteString{
                     if currentTime == totalTime{
                         JNCache[urlStr] = nil
                     }else{
@@ -347,8 +348,8 @@ private class JNPlayer: UIView{
                     }
                 }
                 
-                self.delegate?.jnPlayerTimeChanged(current, totalTime: total)
-                
+                self.delegate?.jnPlayerTimeChanged(currentTime: current, totalTime: total)
+
             })
         }
         willSet{
@@ -366,12 +367,12 @@ private class JNPlayer: UIView{
     private var playerItem:AVPlayerItem? = nil{
         didSet{
             if let _ = playerItem{
-                playerItem?.addObserver(self, forKeyPath: PlayerItemStatusKey, options: NSKeyValueObservingOptions.New, context: nil)
-                playerItem?.addObserver(self, forKeyPath: PlayerLoadTimeRangeKey, options: NSKeyValueObservingOptions.New, context: nil)
-                playerItem?.addObserver(self, forKeyPath: PlaybackBufferEmptyKey, options: NSKeyValueObservingOptions.New, context: nil)
-                playerItem?.addObserver(self, forKeyPath: PlaybackBufferLikelyToKeepUpKey, options: NSKeyValueObservingOptions.New, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlayerItemStatusKey, options: .new, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlayerLoadTimeRangeKey, options: .new, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlaybackBufferEmptyKey, options: .new, context: nil)
+                playerItem?.addObserver(self, forKeyPath: PlaybackBufferLikelyToKeepUpKey, options: .new, context: nil)
                 
-                NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.playerDidPlayEnd(_:)), name: AVPlayerItemDidPlayToEndTimeNotification, object: nil)
+                NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidPlayEnd(notification:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: nil)
                 
                 self.player = AVPlayer(playerItem: self.playerItem)
             }
@@ -381,7 +382,7 @@ private class JNPlayer: UIView{
             playerItem?.removeObserver(self, forKeyPath: PlayerLoadTimeRangeKey, context: nil)
             playerItem?.removeObserver(self, forKeyPath: PlaybackBufferEmptyKey, context: nil)
             playerItem?.removeObserver(self, forKeyPath: PlaybackBufferLikelyToKeepUpKey, context: nil)
-            NSNotificationCenter.defaultCenter().removeObserver(self)
+            NotificationCenter.default.removeObserver(self)
         }
     }
     
@@ -398,26 +399,25 @@ private class JNPlayer: UIView{
     
     private func setUpUI(){
         self.translatesAutoresizingMaskIntoConstraints = false
-        self.backgroundColor = UIColor.blackColor()
+        self.backgroundColor = UIColor.black
         self.layer.addSublayer(playerLayer)
         self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspect
     }
     
-    private override func layoutSubviews() {
+    fileprivate override func layoutSubviews() {
         self.playerLayer.frame = self.layer.bounds
     }
     
-    private override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
-        
-        if let item = object as? AVPlayerItem where item == self.player?.currentItem{
+    fileprivate override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if let item = object as? AVPlayerItem, item == self.player?.currentItem{
             if keyPath == PlayerItemStatusKey{
                 switch item.status {
-                case .Failed:
-                    self.delegate?.jnPlayerStatusChanged(.Failed)
-                case .Unknown:
-                    self.delegate?.jnPlayerStatusChanged(.Unknown)
-                case .ReadyToPlay:
-                    self.delegate?.jnPlayerStatusChanged(.ReadyToPlay)
+                case .failed:
+                    self.delegate?.jnPlayerStatusChanged(status: .Failed)
+                case .unknown:
+                    self.delegate?.jnPlayerStatusChanged(status: .Unknown)
+                case .readyToPlay:
+                    self.delegate?.jnPlayerStatusChanged(status: .ReadyToPlay)
                 }
                 return
             }
@@ -428,7 +428,7 @@ private class JNPlayer: UIView{
                 
                 if let timeRangeValue = loadTimeRange.first{
                     
-                    let timeRange = timeRangeValue.CMTimeRangeValue
+                    let timeRange = timeRangeValue.timeRangeValue
                     
                     let start = CMTimeGetSeconds(timeRange.start)
                     let duration = CMTimeGetSeconds(timeRange.duration)
@@ -436,7 +436,7 @@ private class JNPlayer: UIView{
                     let loaded = start + duration
                     let total = CMTimeGetSeconds(item.duration)
                     
-                    self.delegate?.jnPlayerLoadedChanged(loaded, totalTime: total)
+                    self.delegate?.jnPlayerLoadedChanged(loadedTime: loaded, totalTime: total)
                 }
                 
                 
@@ -453,46 +453,96 @@ private class JNPlayer: UIView{
                 
                 return
             }
-
+            
         }
     }
     
+//    private func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutableRawPointer) {
+//        
+//        if let item = object as? AVPlayerItem, item == self.player?.currentItem{
+//            if keyPath == PlayerItemStatusKey{
+//                switch item.status {
+//                case .failed:
+//                    self.delegate?.jnPlayerStatusChanged(status: .Failed)
+//                case .unknown:
+//                    self.delegate?.jnPlayerStatusChanged(status: .Unknown)
+//                case .readyToPlay:
+//                    self.delegate?.jnPlayerStatusChanged(status: .ReadyToPlay)
+//                }
+//                return
+//            }
+//            
+//            if keyPath == PlayerLoadTimeRangeKey{
+//                
+//                let loadTimeRange = item.loadedTimeRanges
+//                
+//                if let timeRangeValue = loadTimeRange.first{
+//                    
+//                    let timeRange = timeRangeValue.timeRangeValue
+//                    
+//                    let start = CMTimeGetSeconds(timeRange.start)
+//                    let duration = CMTimeGetSeconds(timeRange.duration)
+//                    
+//                    let loaded = start + duration
+//                    let total = CMTimeGetSeconds(item.duration)
+//                    
+//                    self.delegate?.jnPlayerLoadedChanged(loadedTime: loaded, totalTime: total)
+//                }
+//                
+//                
+//                
+//                return
+//            }
+//            
+//            if keyPath == PlaybackBufferEmptyKey{
+//                
+//                return
+//            }
+//            
+//            if keyPath == PlaybackBufferLikelyToKeepUpKey{
+//                
+//                return
+//            }
+//
+//        }
+//    }
+    
     @objc func playerDidPlayEnd(notification:NSNotification){
-        if let item = notification.object as? AVPlayerItem where item == self.player?.currentItem{
+        if let item = notification.object as? AVPlayerItem, item == self.player?.currentItem{
             // 清除播放完视频的时间点
-            if let urlStr = self.URL?.absoluteString{
+            if let urlStr = self.url?.absoluteString{
                 JNCache[urlStr] = nil
             }
             
-            self.delegate?.jnPlayerStatusChanged(.PlayEnd)
+            self.delegate?.jnPlayerStatusChanged(status: .PlayEnd)
             
         }
     }
     
     deinit {
-        self.URL = nil
+        self.url = nil
         self.playerItem = nil
         self.player = nil
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
 extension JNPlayer:JNPlayerControl{
-    @objc private func play(){
+    @objc fileprivate func play(){
         if self.player?.currentItem?.duration == self.player?.currentItem?.currentTime(){
-            self.player?.seekToTime(kCMTimeZero)
+            self.player?.seek(to: kCMTimeZero)
         }
         
-        if let urlStr = self.URL?.absoluteString{
+        if let urlStr = self.url?.absoluteString{
             if let time = JNCache[urlStr]{
-                self.player?.seekToTime(time)
+                self.player?.seek(to: time)
             }
         }
         
         self.playerLayer.player?.play()
     }
     
-    @objc private func pause() {
+    @objc fileprivate func pause() {
         self.playerLayer.player?.pause()
     }
 }

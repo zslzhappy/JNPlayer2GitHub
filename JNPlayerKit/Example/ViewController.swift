@@ -22,10 +22,10 @@ class ViewController: UIViewController {
         
         //self.topPlayerView.play("http://od7vwyosd.bkt.clouddn.com/o_1asev3gvokag1bqb1ohqg6h1ko29.mp4", title: "TopPlayerView")
         
-        self.topPlayerView.play([("http://baobab.wdjcdn.com/1457162012752491010143.mp4", "firstAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), ("http://baobab.wdjcdn.com/14571455324031.mp4", "second"), ("http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4", "third")])
+        self.topPlayerView.play(items:[("http://baobab.wdjcdn.com/1457162012752491010143.mp4", "firstAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), ("http://baobab.wdjcdn.com/14571455324031.mp4", "second"), ("http://gslb.miaopai.com/stream/kPzSuadRd2ipEo82jk9~sA__.mp4", "third")])
         
         self.topPlayerView.backAction = {
-            self.navigationController?.popViewControllerAnimated(true)
+            self.navigationController?.popViewController(animated: true)
         }
         
         self.navigationController?.setNavigationBarHidden(true, animated: true)
@@ -42,11 +42,11 @@ class ViewController: UIViewController {
         
         self.view.addConstraints({
             
-            let left = NSLayoutConstraint(item: self.topPlayerView, attribute: .Left, relatedBy: .Equal, toItem: self.view, attribute: .Left, multiplier: 1, constant: 0)
-            let top = NSLayoutConstraint(item: self.topPlayerView, attribute: .Top, relatedBy: .Equal, toItem: self.view, attribute: .Top, multiplier: 1, constant: 0)
-            let right = NSLayoutConstraint(item: self.topPlayerView, attribute: .Right, relatedBy: .Equal, toItem: self.view, attribute: .Right, multiplier: 1, constant: 0)
+            let left = NSLayoutConstraint(item: self.topPlayerView, attribute: .left, relatedBy: .equal, toItem: self.view, attribute: .left, multiplier: 1, constant: 0)
+            let top = NSLayoutConstraint(item: self.topPlayerView, attribute: .top, relatedBy: .equal, toItem: self.view, attribute: .top, multiplier: 1, constant: 0)
+            let right = NSLayoutConstraint(item: self.topPlayerView, attribute: .right, relatedBy: .equal, toItem: self.view, attribute: .right, multiplier: 1, constant: 0)
             
-            let bottom = NSLayoutConstraint(item: self.topPlayerView, attribute: .Bottom, relatedBy: .Equal, toItem: self.view, attribute: .Bottom, multiplier: 1, constant: 0)
+            let bottom = NSLayoutConstraint(item: self.topPlayerView, attribute: .bottom, relatedBy: .equal, toItem: self.view, attribute: .bottom, multiplier: 1, constant: 0)
             
             self.bottomConstraint = bottom
             
@@ -55,23 +55,23 @@ class ViewController: UIViewController {
         
         
         self.topPlayerView.addConstraint({
-            let height = NSLayoutConstraint(item: self.topPlayerView, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1, constant: 200)
+            let height = NSLayoutConstraint(item: self.topPlayerView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 200)
             self.heightConstraint = height
             return height
         }())
         
         let isPartrait = self.view.frame.width < self.view.frame.height
-        self.bottomConstraint?.active = !isPartrait
-        self.heightConstraint?.active = isPartrait
+        self.bottomConstraint?.isActive = !isPartrait
+        self.heightConstraint?.isActive = isPartrait
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.topPlayerView.play(nil)
+        self.topPlayerView.play(URL:nil)
     }
     
 }
@@ -100,43 +100,53 @@ extension ViewController: JNPlayerViewDelegate{
 
 extension ViewController{
     
-    override func shouldAutorotate() -> Bool {
-        return true
-    }
-    
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-        return [.Portrait, .LandscapeLeft, .LandscapeRight]
-    }
-    
-    override func preferredInterfaceOrientationForPresentation() -> UIInterfaceOrientation {
-        return .Portrait
-    }
-    
-    override func prefersStatusBarHidden() -> Bool {
-        if self.view.frame.width > self.view.frame.height{
+    override var shouldAutorotate: Bool{
+        get{
             return true
-        }else{
-            return false
         }
     }
     
-    override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask{
+        get{
+            return [.portrait, .landscapeLeft, .landscapeRight]
+        }
+    }
+    
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation{
+        get{
+            return .portrait
+        }
+    }
+    
+    override var prefersStatusBarHidden: Bool{
+        get{
+            if self.view.frame.width > self.view.frame.height{
+                return true
+            }else{
+                return false
+            }
+        }
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         
-        coordinator.animateAlongsideTransition({ (context) in
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        coordinator.animate(alongsideTransition: { (context) in
             if size.width > size.height{
-                self.bottomConstraint?.active = true
-                self.heightConstraint?.active = false
+                self.bottomConstraint?.isActive = true
+                self.heightConstraint?.isActive = false
                 self.view.layoutIfNeeded()
             }else{
-                self.bottomConstraint?.active = false
-                self.heightConstraint?.active = true
+                self.bottomConstraint?.isActive = false
+                self.heightConstraint?.isActive = true
                 self.view.layoutIfNeeded()
             }
         }, completion: {content in
-        
+            
         })
     }
+    
 }
 
 

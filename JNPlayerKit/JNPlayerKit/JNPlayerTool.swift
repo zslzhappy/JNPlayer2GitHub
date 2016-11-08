@@ -19,18 +19,18 @@ class JNPlayerTool:NSObject {
     
     func image(name:String) -> UIImage?{
         
-        let podBundle = NSBundle(forClass: self.classForCoder)
+        let podBundle = Bundle(for: self.classForCoder)
         
-        if let bundleURL = podBundle.URLForResource("JNPlayerKit", withExtension: "bundle") {
-            if let bundle = NSBundle(URL: bundleURL) {
-                let image = UIImage(named: name, inBundle: bundle, compatibleWithTraitCollection: nil)
+        if let bundleURL = podBundle.url(forResource: "JNPlayerKit", withExtension: "bundle") {
+            if let bundle = Bundle(url: bundleURL) {
+                let image = UIImage(named: name, in: bundle, compatibleWith: nil)
                 return image
             }
             
         }
         
-        let bundle = NSBundle(forClass: self.classForCoder)
-        let image = UIImage(named: name, inBundle: bundle, compatibleWithTraitCollection: nil)
+        let bundle = Bundle(for: self.classForCoder)
+        let image = UIImage(named: name, in: bundle, compatibleWith: nil)
         return image
     }
     
@@ -38,7 +38,9 @@ class JNPlayerTool:NSObject {
     {
         guard image != nil else{return nil}
         UIGraphicsBeginImageContextWithOptions(newSize, false, 0.0)
-        image!.drawInRect(CGRectMake(0, 0, newSize.width, newSize.height))
+        
+        let frame = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
+        image!.draw(in: frame)
         
         let newImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
@@ -48,18 +50,18 @@ class JNPlayerTool:NSObject {
     
     func edges(first:UIView, second:UIView) -> [NSLayoutConstraint]{
         
-        let left = NSLayoutConstraint(item: first, attribute: .Left, relatedBy: .Equal, toItem: second, attribute: .Left, multiplier: 1, constant: 0)
-        let top = NSLayoutConstraint(item: first, attribute: .Top, relatedBy: .Equal, toItem: second, attribute: .Top, multiplier: 1, constant: 0)
-        let right = NSLayoutConstraint(item: first, attribute: .Right, relatedBy: .Equal, toItem: second, attribute: .Right, multiplier: 1, constant: 0)
-        let bottom = NSLayoutConstraint(item: first, attribute: .Bottom, relatedBy: .Equal, toItem: second, attribute: .Bottom, multiplier: 1, constant: 0)
+        let left = NSLayoutConstraint(item: first, attribute: .left, relatedBy: .equal, toItem: second, attribute: .left, multiplier: 1, constant: 0)
+        let top = NSLayoutConstraint(item: first, attribute: .top, relatedBy: .equal, toItem: second, attribute: .top, multiplier: 1, constant: 0)
+        let right = NSLayoutConstraint(item: first, attribute: .right, relatedBy: .equal, toItem: second, attribute: .right, multiplier: 1, constant: 0)
+        let bottom = NSLayoutConstraint(item: first, attribute: .bottom, relatedBy: .equal, toItem: second, attribute: .bottom, multiplier: 1, constant: 0)
     
         return [left, top, right, bottom]
     }
     
     // 当前设备是否为横屏
     func deviceIsHorizontal() -> Bool{
-        let currentOrient = UIApplication.sharedApplication().statusBarOrientation
-        if currentOrient == .LandscapeRight || currentOrient == .LandscapeLeft{
+        let currentOrient = UIApplication.shared.statusBarOrientation
+        if currentOrient == .landscapeRight || currentOrient == .landscapeLeft{
             return true
         }
         return false
@@ -72,7 +74,7 @@ class JNPlayerTool:NSObject {
  */
 class JNPlayerCache: NSObject, NSCacheDelegate{
     static let sharedInstance = JNPlayerCache()
-    private var cache:[String: (CMTime, NSTimeInterval)] = [:]
+    private var cache:[String: (CMTime, TimeInterval)] = [:]
     
     subscript(key: String) -> CMTime?{
         get{
@@ -83,8 +85,8 @@ class JNPlayerCache: NSObject, NSCacheDelegate{
                 var lock = OS_SPINLOCK_INIT
                 OSSpinLockLock(&lock)
                 
-                self.cache.sort({ $0.1.1 < $1.1.1}).map({$0.0})[0...4].forEach({[unowned self] key in
-                    self.cache.removeValueForKey(key)
+                self.cache.sorted(by: { $0.1.1 < $1.1.1}).map({$0.0})[0...4].forEach({[unowned self] key in
+                    self.cache.removeValue(forKey: key)
                     })
                 
                 OSSpinLockUnlock(&lock)
@@ -92,7 +94,7 @@ class JNPlayerCache: NSObject, NSCacheDelegate{
             if let _ = newValue{
                 self.cache[key] = (newValue!, NSDate().timeIntervalSince1970)
             }else{
-                self.cache.removeValueForKey(key)
+                self.cache.removeValue(forKey: key)
             }
         }
     }
