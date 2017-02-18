@@ -71,7 +71,7 @@ class ViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.topPlayerView.play(URL:nil)
+        self.topPlayerView.play(url:nil)
     }
     
 }

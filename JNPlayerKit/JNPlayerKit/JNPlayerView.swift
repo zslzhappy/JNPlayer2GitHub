@@ -28,11 +28,11 @@ public protocol JNPlayerViewDelegate: class{
 }
 
 private protocol JNPlayerDelegate: class {
-    func jnPlayerStatusChanged(status:JNPlayerStatus)
+    func jnPlayerStatusChanged(_ status:JNPlayerStatus)
     
-    func jnPlayerTimeChanged(currentTime: TimeInterval, totalTime:TimeInterval)
+    func jnPlayerTimeChanged(_ currentTime: TimeInterval, totalTime:TimeInterval)
 
-    func jnPlayerLoadedChanged(loadedTime: TimeInterval, totalTime: TimeInterval)
+    func jnPlayerLoadedChanged(_ loadedTime: TimeInterval, totalTime: TimeInterval)
 }
 
 
@@ -144,14 +144,14 @@ public class JNPlayerView: UIView {
 
 extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
     
-    public func play(URL:String?, title:String? = nil){
-        guard URL != nil else {
+    public func play(url:String?, title:String? = nil){
+        guard url != nil else {
             self.player.url = nil
             self.playerItems = nil
             return
         }
         
-        self.play(items: [(URL!, title)])
+        self.play(items: [(url!, title)])
     }
     
     public func play(items:[JNPlayerItem]){
@@ -163,6 +163,7 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         
         self.playerItems = tmpItems
     }
+    
     public func play(index:Int){
         guard index < (self.playerItems?.count ?? 0) && index > 0 else{return}
         self.playerControl.showLoading()
@@ -264,7 +265,7 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
 }
 
 extension JNPlayerView: JNPlayerDelegate{
-    func jnPlayerStatusChanged(status: JNPlayerStatus) {
+    func jnPlayerStatusChanged(_ status: JNPlayerStatus) {
         switch status {
         case .Failed:
             print("Fail")
@@ -292,13 +293,13 @@ extension JNPlayerView: JNPlayerDelegate{
         }
     }
     
-    fileprivate func jnPlayerTimeChanged(currentTime: TimeInterval, totalTime: TimeInterval) {
+    fileprivate func jnPlayerTimeChanged(_ currentTime: TimeInterval, totalTime: TimeInterval) {
         self.playerControl.playProgress = Float(currentTime / totalTime)
         self.playerControl.currentTime = currentTime
         self.playerControl.totalTime = totalTime
     }
     
-    fileprivate func jnPlayerLoadedChanged(loadedTime: TimeInterval, totalTime: TimeInterval) {
+    fileprivate func jnPlayerLoadedChanged(_ loadedTime: TimeInterval, totalTime: TimeInterval) {
         self.playerControl.bufferProgress = Float(loadedTime / totalTime)
     }
 }
@@ -348,7 +349,7 @@ private class JNPlayer: UIView{
                     }
                 }
                 
-                self.delegate?.jnPlayerTimeChanged(currentTime: current, totalTime: total)
+                self.delegate?.jnPlayerTimeChanged(current, totalTime: total)
 
             })
         }
@@ -413,11 +414,11 @@ private class JNPlayer: UIView{
             if keyPath == PlayerItemStatusKey{
                 switch item.status {
                 case .failed:
-                    self.delegate?.jnPlayerStatusChanged(status: .Failed)
+                    self.delegate?.jnPlayerStatusChanged(.Failed)
                 case .unknown:
-                    self.delegate?.jnPlayerStatusChanged(status: .Unknown)
+                    self.delegate?.jnPlayerStatusChanged(.Unknown)
                 case .readyToPlay:
-                    self.delegate?.jnPlayerStatusChanged(status: .ReadyToPlay)
+                    self.delegate?.jnPlayerStatusChanged(.ReadyToPlay)
                 }
                 return
             }
@@ -436,7 +437,7 @@ private class JNPlayer: UIView{
                     let loaded = start + duration
                     let total = CMTimeGetSeconds(item.duration)
                     
-                    self.delegate?.jnPlayerLoadedChanged(loadedTime: loaded, totalTime: total)
+                    self.delegate?.jnPlayerLoadedChanged(loaded, totalTime: total)
                 }
                 
                 
@@ -514,7 +515,7 @@ private class JNPlayer: UIView{
                 JNCache[urlStr] = nil
             }
             
-            self.delegate?.jnPlayerStatusChanged(status: .PlayEnd)
+            self.delegate?.jnPlayerStatusChanged(.PlayEnd)
             
         }
     }

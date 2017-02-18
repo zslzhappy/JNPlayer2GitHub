@@ -10,6 +10,7 @@
 		040530481DB5CF3300FE6CF1 /* JNPlayerKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 04FB19041DAE0872007E6020 /* JNPlayerKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		041BCA4E1DB10508007F8B24 /* JNPlayerTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BCA4D1DB10508007F8B24 /* JNPlayerTool.swift */; };
 		04439FAA1DAF8EB5000A3EB9 /* JNPlayerKit.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 04439FA91DAF8EB5000A3EB9 /* JNPlayerKit.xcassets */; };
+		04EA52CB1DDC354700CCC613 /* JNPlayerNetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EA52CA1DDC354700CCC613 /* JNPlayerNetworkMonitor.swift */; };
 		04FB19091DAE0872007E6020 /* JNPlayerKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 04FB19071DAE0872007E6020 /* JNPlayerKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		04FB19101DAE08BA007E6020 /* JNPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FB190F1DAE08BA007E6020 /* JNPlayerView.swift */; };
 		04FB193E1DAE2B62007E6020 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FB193D1DAE2B62007E6020 /* AppDelegate.swift */; };
@@ -49,6 +50,7 @@
 /* Begin PBXFileReference section */
 		041BCA4D1DB10508007F8B24 /* JNPlayerTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JNPlayerTool.swift; sourceTree = "<group>"; };
 		04439FA91DAF8EB5000A3EB9 /* JNPlayerKit.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = JNPlayerKit.xcassets; sourceTree = "<group>"; };
+		04EA52CA1DDC354700CCC613 /* JNPlayerNetworkMonitor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JNPlayerNetworkMonitor.swift; sourceTree = "<group>"; };
 		04FB19041DAE0872007E6020 /* JNPlayerKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = JNPlayerKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		04FB19071DAE0872007E6020 /* JNPlayerKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JNPlayerKit.h; sourceTree = "<group>"; };
 		04FB19081DAE0872007E6020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				04FB19501DAE3A59007E6020 /* JNPlayerControlView.swift */,
 				04439FA91DAF8EB5000A3EB9 /* JNPlayerKit.xcassets */,
 				041BCA4D1DB10508007F8B24 /* JNPlayerTool.swift */,
+				04EA52CA1DDC354700CCC613 /* JNPlayerNetworkMonitor.swift */,
 			);
 			path = JNPlayerKit;
 			sourceTree = "<group>";
@@ -249,6 +252,7 @@
 			files = (
 				041BCA4E1DB10508007F8B24 /* JNPlayerTool.swift in Sources */,
 				04FB19101DAE08BA007E6020 /* JNPlayerView.swift in Sources */,
+				04EA52CB1DDC354700CCC613 /* JNPlayerNetworkMonitor.swift in Sources */,
 				04FB19511DAE3A59007E6020 /* JNPlayerControlView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -411,7 +415,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0.1;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -431,7 +435,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.chanyard.JNPlayerKit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 3.0.1;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
