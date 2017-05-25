@@ -300,10 +300,11 @@ extension JNPlayerView: JNPlayerDelegate{
         case .ReadyToPlay:
             if let second = self.player.player?.currentTime().seconds, second <= 0{
                 self.playerControl.closeLoading()
-                
-                if self.shouldPlay && self.autoPlay{
-                    self.play()
-                    self.playerControl.isShow = true
+                if self.autoPlay{
+                    if self.shouldPlay{
+                        self.play()
+                        self.playerControl.isShow = true
+                    }
                 }
             }
         case .PlayEnd:
