@@ -25,6 +25,14 @@ public protocol JNPlayerViewDelegate: class{
     // 播放失败
     func playerView(player:JNPlayerView, playingItem:JNPlayerItem, error:NSError)
     
+    
+    /// 是否播放item
+    ///
+    /// - Parameters:
+    ///   - player: 播放器
+    ///   - willPlayItem: 将要播放的item
+    /// - Returns: true OR false
+    func playerViewWillPlayItem(player:JNPlayerView, willPlayItem:JNPlayerItem) -> Bool
 }
 
 private protocol JNPlayerDelegate: class {
@@ -33,12 +41,6 @@ private protocol JNPlayerDelegate: class {
     func jnPlayerTimeChanged(_ currentTime: TimeInterval, totalTime:TimeInterval)
 
     func jnPlayerLoadedChanged(_ loadedTime: TimeInterval, totalTime: TimeInterval)
-}
-
-
-@objc protocol JNPlayerControl {
-    func play()
-    func pause()
 }
 
 public enum JNPlayerStatus {
@@ -142,8 +144,7 @@ public class JNPlayerView: UIView {
     }
 }
 
-extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
-    
+extension JNPlayerView{
     public func play(url:String?, title:String? = nil){
         guard url != nil else {
             self.player.url = nil
@@ -180,18 +181,47 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         self.play(index: self.playingIndex - 1)
     }
     
-    
-    @objc internal func play(){
-        self.player.play()
-        self.status = .Play
-    }
-    
-    @objc internal func pause() {
+    /// 暂停
+    public func pause() {
         self.player.pause()
         self.status = .Pause
     }
     
-    public func back() {
+    /// 播放
+    public func play() {
+        if self.shouldPlay {
+            self.player.play()
+            self.status = .Play
+        }else{
+            self.pause()
+        }
+    }
+    
+    var shouldPlay:Bool{
+        get{
+            let canPlay = self.delegate?.playerViewWillPlayItem(player: self, willPlayItem: self.playingItem!) ?? true
+            return canPlay
+        }
+    }
+}
+
+extension JNPlayerView: JNPlayerControlDelegate{
+    
+    internal func ct_play(){
+        if self.shouldPlay{
+            self.player.play()
+            self.status = .Play
+        }else{
+            self.pause()
+        }
+    }
+    
+    internal func ct_pause() {
+        self.player.pause()
+        self.status = .Pause
+    }
+    
+    internal func ct_back() {
         if JNTool.deviceIsHorizontal(){
             self.changeDeviceOrientation(isHorizontal: false)
         }else{
@@ -201,7 +231,7 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         }
     }
     
-    func jnPlayerTimes() -> (total: TimeInterval, current: TimeInterval) {
+    func ct_jnPlayerTimes() -> (total: TimeInterval, current: TimeInterval) {
         if let totalTime = self.player.player?.currentItem?.duration, let currentTime = self.player.player?.currentItem?.currentTime(){
             
             if totalTime == currentTime{
@@ -214,7 +244,7 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         }
     }
     
-    func jnPlayerSeekTime(time: TimeInterval) {
+    func ct_jnPlayerSeekTime(time: TimeInterval) {
         
         if time.isNaN {
             return
@@ -227,7 +257,7 @@ extension JNPlayerView: JNPlayerControl, JNPlayerControlDelegate{
         }
     }
     
-    func jnPlayerFullScreen(full: Bool) {
+    func ct_jnPlayerFullScreen(full: Bool) {
         if full{
             
             var supportFullScreen:Bool = false
@@ -277,7 +307,7 @@ extension JNPlayerView: JNPlayerDelegate{
             if let second = self.player.player?.currentTime().seconds, second <= 0{
                 self.playerControl.closeLoading()
                 
-                if self.autoPlay{
+                if self.shouldPlay && self.autoPlay{
                     self.play()
                     self.playerControl.isShow = true
                 }
@@ -528,8 +558,8 @@ private class JNPlayer: UIView{
     }
 }
 
-extension JNPlayer:JNPlayerControl{
-    @objc fileprivate func play(){
+extension JNPlayer{
+    fileprivate func play(){
         if self.player?.currentItem?.duration == self.player?.currentItem?.currentTime(){
             self.player?.seek(to: kCMTimeZero)
         }
@@ -543,7 +573,7 @@ extension JNPlayer:JNPlayerControl{
         self.playerLayer.player?.play()
     }
     
-    @objc fileprivate func pause() {
+    fileprivate func pause() {
         self.playerLayer.player?.pause()
     }
 }

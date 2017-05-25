@@ -9,13 +9,16 @@
 import UIKit
 import Dispatch
 
-protocol JNPlayerControlDelegate:JNPlayerControl {
-    func jnPlayerTimes() -> (total: TimeInterval, current: TimeInterval)
-    func jnPlayerSeekTime(time:TimeInterval)
+protocol JNPlayerControlDelegate:class {
+    func ct_jnPlayerTimes() -> (total: TimeInterval, current: TimeInterval)
+    func ct_jnPlayerSeekTime(time:TimeInterval)
     
-    func jnPlayerFullScreen(full:Bool)
+    func ct_jnPlayerFullScreen(full:Bool)
     
-    func back()
+    func ct_back()
+    
+    func ct_play()
+    func ct_pause()
 }
 
 
@@ -33,11 +36,7 @@ class JNPlayerControlView: UIView {
     // 上次用户交互时间，用于判断是否隐藏控制器
     fileprivate var lastInteract:NSDate = NSDate(){
         didSet{
-            
             let delayTime = DispatchTime.now() + DispatchTimeInterval.seconds(7)
-            
-            //let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(NSEC_PER_SEC * 7))
-            
             DispatchQueue.main.asyncAfter(deadline: delayTime, execute: {[unowned self] in
                 if self.lastInteract.timeIntervalSinceNow < -5{
                     if self.isShow{
@@ -45,14 +44,6 @@ class JNPlayerControlView: UIView {
                     }
                 }
             })
-            
-//            dispatch_after(delayTime, dispatch_get_main_queue(), {[unowned self] in
-//                if self.lastInteract.timeIntervalSinceNow < -5{
-//                    if self.isShow{
-//                        self.isShow = false
-//                    }
-//                }
-//            })
         }
     }
     
@@ -185,46 +176,46 @@ class JNPlayerControlView: UIView {
         
         self.topControl.backAction = {[unowned self] in
             self.lastInteract = NSDate()
-            self.delegate?.back()
+            self.delegate?.ct_back()
         }
         
         self.middleControl.playAction = {[unowned self] in
             self.lastInteract = NSDate()
-            self.delegate?.play()
+            self.delegate?.ct_play()
         }
         
         self.middleControl.pauseAction = {[unowned self] in
             self.lastInteract = NSDate()
-            self.delegate?.pause()
+            self.delegate?.ct_pause()
         }
         
         self.middleControl.replayAction = {[unowned self] in
             self.lastInteract = NSDate()
-            self.delegate?.play()
+            self.delegate?.ct_play()
         }
         
         self.bottomControl.sliderValueChangedAction = {[unowned self] value in
             
             self.lastInteract = NSDate()
             
-            let totalTime = self.delegate?.jnPlayerTimes().total ?? 0
+            let totalTime = self.delegate?.ct_jnPlayerTimes().total ?? 0
             
             let currentTime = totalTime * Double(value)
             
             self.currentTime = currentTime
             
             // player seek time
-            self.delegate?.jnPlayerSeekTime(time: currentTime)
+            self.delegate?.ct_jnPlayerSeekTime(time: currentTime)
         }
         
         self.bottomControl.fullScreenAction = {[unowned self] in
             self.lastInteract = NSDate()
-            self.delegate?.jnPlayerFullScreen(full: true)
+            self.delegate?.ct_jnPlayerFullScreen(full: true)
         }
         
         self.bottomControl.nonFullScreenAction = {[unowned self] in
             self.lastInteract = NSDate()
-            self.delegate?.jnPlayerFullScreen(full: false)
+            self.delegate?.ct_jnPlayerFullScreen(full: false)
         }
         
         let tapGes = UITapGestureRecognizer(target: self, action: #selector(self.tapAction(tap:)))
@@ -472,10 +463,8 @@ class JNPlayerControlView: UIView {
             switch sender {
             case self.playButton:
                 self.playAction?()
-                self.pauseButton.isHidden = false
             case self.pauseButton:
                 self.pauseAction?()
-                self.playButton.isHidden = false
             case self.replayButton:
                 self.replayAction?()
             default:
