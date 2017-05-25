@@ -86,6 +86,9 @@ class ViewController: UIViewController {
         self.topPlayerView.play()
     }
     
+    @IBAction func tapToPause(_ sender: UIButton) {
+        self.topPlayerView.pause()
+    }
 }
 
 extension ViewController: JNPlayerViewDelegate{
