@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "JNPlayerKit"
-  s.version          = "1.0.3"
+  s.version          = "1.0.4"
   s.summary          = "Video Player Using Swift, based on AVPlayer"
 
   s.description      = <<-DESC
