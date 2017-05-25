@@ -15,7 +15,9 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        self.topPlayerView.autoPlay = false
+        
         self.setUpTopPlayer()
         
         self.topPlayerView.delegate = self
