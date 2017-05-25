@@ -208,17 +208,11 @@ extension JNPlayerView{
 extension JNPlayerView: JNPlayerControlDelegate{
     
     internal func ct_play(){
-        if self.shouldPlay{
-            self.player.play()
-            self.status = .Play
-        }else{
-            self.pause()
-        }
+        self.play()
     }
     
     internal func ct_pause() {
-        self.player.pause()
-        self.status = .Pause
+        self.pause()
     }
     
     internal func ct_back() {
