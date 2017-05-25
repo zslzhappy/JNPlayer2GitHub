@@ -74,6 +74,18 @@ class ViewController: UIViewController {
         self.topPlayerView.play(url:nil)
     }
     
+    
+    var shouldPlay:Bool = false
+    
+    @IBAction func exchangeStatusAction(_ sender: UIButton) {
+        self.shouldPlay = !self.shouldPlay
+    }
+    
+    
+    @IBAction func tapToPlay(_ sender: UIButton) {
+        self.topPlayerView.play()
+    }
+    
 }
 
 extension ViewController: JNPlayerViewDelegate{
@@ -95,6 +107,10 @@ extension ViewController: JNPlayerViewDelegate{
     // 播放失败
     func playerView(player:JNPlayerView, playingItem:JNPlayerItem, error:NSError){
         print("playerItemError:\(playingItem)")
+    }
+    
+    func playerViewWillPlayItem(player:JNPlayerView, willPlayItem:JNPlayerItem) -> Bool{
+        return self.shouldPlay
     }
 }
 
