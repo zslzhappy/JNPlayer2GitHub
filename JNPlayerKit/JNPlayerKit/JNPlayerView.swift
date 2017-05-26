@@ -6,6 +6,7 @@
 //  Copyright © 2016年 Magugi. All rights reserved.
 //
 
+//  新版本
 import UIKit
 import AVFoundation
 
