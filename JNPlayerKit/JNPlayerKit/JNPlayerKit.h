@@ -5,7 +5,7 @@
 //  Created by mac on 16/10/12.
 //  Copyright © 2016年 Magugi. All rights reserved.
 //
-
+//
 #import <UIKit/UIKit.h>
 
 //! Project version number for JNPlayerKit.
