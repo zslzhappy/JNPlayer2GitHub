@@ -7,7 +7,7 @@
 //
 //
 #import <UIKit/UIKit.h>
-//11
+//1.0.9
 //! Project version number for JNPlayerKit.
 FOUNDATION_EXPORT double JNPlayerKitVersionNumber;
 
