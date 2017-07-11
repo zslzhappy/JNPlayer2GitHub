@@ -10,8 +10,6 @@
 //1.1.0
 
 //分支1次
-// 分支2
-
 //! Project version number for JNPlayerKit.
 FOUNDATION_EXPORT double JNPlayerKitVersionNumber;
 
