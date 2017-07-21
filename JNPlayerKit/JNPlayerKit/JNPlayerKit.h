@@ -18,6 +18,8 @@
 
 //branch2
 //2.4
+//b3
+
 //! Project version number for JNPlayerKit.
 FOUNDATION_EXPORT double JNPlayerKitVersionNumber;
 
